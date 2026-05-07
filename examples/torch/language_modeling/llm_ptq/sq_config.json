@@ -1,0 +1,7 @@
+{
+    "name": "smooth",
+    "alpha": 1,
+    "scale_clamp_min": 0.001,
+    "model_decoder_layers": "model.layers",
+    "scaling_layers": []
+}

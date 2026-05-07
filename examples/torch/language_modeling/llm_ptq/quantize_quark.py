@@ -9,7 +9,7 @@ import os
 import sys
 import warnings
 from pathlib import Path
-
+os.environ['TORCH_CUDA_ARCH_LIST']="8.9"
 import torch
 from transformers import AutoProcessor
 
@@ -326,7 +326,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_dir",
         help="Specify where the HuggingFace model is. This example support Llama, OPT models",
-        required=True,
+        # required=True,
+        default="/DataVault/checkpoints/Qwen/Qwen3-0.6B"
     )
     parser.add_argument("--device", help="Device for running the quantizer", default="cuda", choices=["cuda", "cpu"])
     parser.add_argument("--multi_gpu", action="store_true")
@@ -366,22 +367,12 @@ if __name__ == "__main__":
     parser.add_argument("--num_calib_data", help="Number of samples for calibration.", type=int, default=512)
 
     # Argument for quantization
-    parser.add_argument("--skip_quantization", action="store_true")
+    parser.add_argument("--skip_quantization", type=bool, default=False)
     parser.add_argument(
         "--file2file_quantization",
         action="store_true",
         help="Enable file-to-file quantization mode. Quantizes safetensors shards directly without loading the full model into memory. "
         "Bypasses model loading, calibration, and standard quantization flow. Requires --model_export hf_format.",
-    )
-
-    parser.add_argument(
-        "--quant_scheme",
-        help="Quantization scheme to use. Supported schemes: all built-in schemes and custom schemes registered."
-        "For the built-in schemes and their detailed configuration, see https://quark.docs.amd.com/latest/pytorch/user_guide_config_for_llm.html. "
-        "To register custom schemes, please uncomment and modify the 'Custom Quantization Schemes' section at the top of this file.",
-        choices=LLMTemplate.get_supported_schemes(),
-        default=None,
-        type=str,
     )
 
     parser.add_argument(
@@ -406,21 +397,37 @@ if __name__ == "__main__":
         action="store_true",
         help="If set, quantize KV cache after RoPE (inside cache) instead of at k_proj/v_proj outputs.",
     )
+
     parser.add_argument(
         "--attention_dtype", help="The dtype of attention quantization.", type=str, default=None, choices=["fp8"]
     )
+
+    parser.add_argument(
+        "--quant_scheme",
+        help="Quantization scheme to use. Supported schemes: all built-in schemes and custom schemes registered."
+        "For the built-in schemes and their detailed configuration, see https://quark.docs.amd.com/latest/pytorch/user_guide_config_for_llm.html. "
+        "To register custom schemes, please uncomment and modify the 'Custom Quantization Schemes' section at the top of this file.",
+        choices=LLMTemplate.get_supported_schemes(),
+        # default=None,
+        default="fp8",
+        type=str,
+    )
+
     parser.add_argument(
         "--quant_algo",
         default=None,
+        # defalut="smoothquant", # smoothquant 添加
         type=lambda s: s.split(","),
         metavar="alg1,alg2",
         help="Comma-separated list of algorithms. Options include awq, gptq, smoothquant, rotation.",
     )
+
     parser.add_argument(
         "--quant_algo_config_file",
         action="append",
         nargs=2,
         metavar=("ALGO_NAME", "CONFIG_FILE"),
+        # default=[["smoothquant", "/home/bruce_ultra/workspace/Quantization_Optimization/Quark/examples/torch/language_modeling/llm_ptq/sq_config.json"]],
         help="Specify a configuration file for a specific quantization algorithm. "
         "Can be repeated for multiple algorithms. "
         "Example: --quant_algo_config_file awq ./awq_config.json --quant_algo_config_file gptq ./gptq_config.json "
@@ -471,11 +478,13 @@ if __name__ == "__main__":
     )
 
     # Argument for saving
-    parser.add_argument("--params_save", help="Model parameters save", action="store_true")
+    parser.add_argument("--params_save", help="Model parameters save", default=True)
     parser.add_argument(
         "--save_dir",
-        help="Directory to save model parameters as safetensors or pth, in the case when --params_save is used.",
-        default="model_params",
+        help="Directory to save model parameters as safetensors or pth, \
+            in the case when --params_save is used. "
+        "If not specified, defaults to ./output/quark/{quant_scheme}_{quant_algo}.",
+        default=None,
     )
 
     # Argument for evaluation
@@ -579,5 +588,9 @@ if __name__ == "__main__":
                     f"Configuration file '{config_file}' for algorithm '{algo_name}' does not exist. "
                     f"Please provide a valid config file path."
                 )
+
+    if args.save_dir is None:
+        algo_str = "_".join(args.quant_algo) if args.quant_algo else "default"
+        args.save_dir = f"/home/bruce_ultra/workspace/output/quark/{args.quant_scheme}_{algo_str}"
 
     main(args)
