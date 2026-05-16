@@ -1,0 +1,11 @@
+{
+  "version": "2.7.0",
+  "createdAt": "2026-05-15T19:04:37.721851Z",
+  "gitCommitHash": "40406053be016d1f33a7256fe00de363c851118c",
+  "outputLanguage": "zh",
+  "nodeCount": 52,
+  "edgeCount": 49,
+  "layerCount": 12,
+  "tourSteps": 10,
+  "analysisMode": "full"
+}
