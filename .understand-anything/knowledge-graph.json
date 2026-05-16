@@ -2,8 +2,21 @@
   "project": {
     "name": "AMD Quark",
     "description": "AMD Quark 是一款全面的跨平台深度学习模型量化工具包。支持 PyTorch 和 ONNX 后端，提供静态/动态量化、多种校准方法、高级 PTQ 算法（AWQ、GPTQ、SmoothQuant、QuaRot、Rotation），以及模型剪枝功能。可部署至多种硬件后端（AMD GPU、Ryzen AI NPU、ONNX Runtime）。支持 LLM 量化、扩散模型量化、CV 模型量化等场景，提供 GGUF、Safetensors、ONNX 等多种导出格式。",
-    "languages": ["Python", "C++", "CUDA", "CMake", "Protocol Buffers"],
-    "frameworks": ["PyTorch", "ONNX", "ONNX Runtime", "Triton", "Transformers", "lm-eval-harness"],
+    "languages": [
+      "Python",
+      "C++",
+      "CUDA",
+      "CMake",
+      "Protocol Buffers"
+    ],
+    "frameworks": [
+      "PyTorch",
+      "ONNX",
+      "ONNX Runtime",
+      "Triton",
+      "Transformers",
+      "lm-eval-harness"
+    ],
     "analyzedAt": "2025-05-16T06:00:00Z",
     "gitCommitHash": "40406053be016d1f33a7256fe00de363c851118c"
   },
@@ -20,7 +33,11 @@
         "quark.shares.utils.import_utils",
         "quark.shares.utils.log"
       ],
-      "keyFiles": ["quark/shares/config.py", "quark/shares/data_type.py", "quark/shares/utils/log.py"]
+      "keyFiles": [
+        "quark/shares/config.py",
+        "quark/shares/data_type.py",
+        "quark/shares/utils/log.py"
+      ]
     },
     {
       "id": "layer_torch_backend",
@@ -28,20 +45,54 @@
       "description": "PyTorch 后端的完整量化实现。支持 eager 和 FX 两种量化模式，提供三层配置体系（QConfig → QLayerConfig → QTensorConfig）、伪量化模块（ScaledFakeQuantize/NonScaled/Sequential）、模型算子替换、图形优化和校准。通过 LLMTemplate 简化 LLM 量化配置。",
       "nodeIds": [
         "quark.torch.__init__",
-        "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8",
-        "n9", "n10", "n11", "n12", "n13", "n14", "n15",
-        "n16", "n17", "n18", "n19", "n20", "n21", "n22", "n23", "n24"
+        "n1",
+        "n2",
+        "n3",
+        "n4",
+        "n5",
+        "n6",
+        "n7",
+        "n8",
+        "n9",
+        "n10",
+        "n11",
+        "n12",
+        "n13",
+        "n14",
+        "n15",
+        "n16",
+        "n17",
+        "n18",
+        "n19",
+        "n20",
+        "n21",
+        "n22",
+        "n23",
+        "n24"
       ],
-      "keyFiles": ["quark/torch/quantization/api.py", "quark/torch/quantization/config/config.py", "quark/torch/quantization/tensor_quantize.py"]
+      "keyFiles": [
+        "quark/torch/quantization/api.py",
+        "quark/torch/quantization/config/config.py",
+        "quark/torch/quantization/tensor_quantize.py"
+      ]
     },
     {
       "id": "layer_torch_algorithms",
       "name": "PyTorch 高级量化算法",
       "description": "实现高级 PTQ 优化算法，包括 AWQ（激活感知权重量化）、GPTQ（基于 Hessian 的逐列量化）、Rotation（Hadamard 正交旋转优化）、Qronos、GPTAQ 等。通过统一算法 API 注册与调度，可配置按序执行多种算法。并行层包含模型剪枝（ModelPruner / OSSCAR / Depth Pruning）功能。",
       "nodeIds": [
-        "n1_alg", "n2_alg", "n3_alg", "n4_alg", "n6_alg"
+        "n1_alg",
+        "n2_alg",
+        "n3_alg",
+        "n4_alg",
+        "n6_alg"
       ],
-      "keyFiles": ["quark/torch/algorithm/api.py", "quark/torch/algorithm/awq/", "quark/torch/algorithm/gptq/", "quark/torch/algorithm/rotation/"]
+      "keyFiles": [
+        "quark/torch/algorithm/api.py",
+        "quark/torch/algorithm/awq/",
+        "quark/torch/algorithm/gptq/",
+        "quark/torch/algorithm/rotation/"
+      ]
     },
     {
       "id": "layer_torch_export",
@@ -50,7 +101,9 @@
       "nodeIds": [
         "n5_alg"
       ],
-      "keyFiles": ["quark/torch/export/api.py"]
+      "keyFiles": [
+        "quark/torch/export/api.py"
+      ]
     },
     {
       "id": "layer_torch_kernel",
@@ -59,7 +112,11 @@
       "nodeIds": [
         "n7_alg"
       ],
-      "keyFiles": ["quark/torch/kernel/__init__.py", "quark/torch/kernel/mx/", "quark/torch/kernel/hw_emulation/"]
+      "keyFiles": [
+        "quark/torch/kernel/__init__.py",
+        "quark/torch/kernel/mx/",
+        "quark/torch/kernel/hw_emulation/"
+      ]
     },
     {
       "id": "layer_onnx_backend",
@@ -67,9 +124,18 @@
       "description": "ONNX 后端的完整量化实现。提供静态/动态两种量化策略，支持 10+ 种校准方法（MinMax/Percentile/MSE/Entropy/LayerWise/PowerOfTwo/Int16）、多种量化器（ONNXQuantizer/QDQ/BFP/MatMulNbits/NPU）。通过 Config/QConfig 分层配置体系控制量化行为，支持加密模式。",
       "nodeIds": [
         "quark.onnx.__init__",
-        "api_o", "quantize_o", "config_o", "data_type_o", "calibration_o", "quantizers_o"
+        "api_o",
+        "quantize_o",
+        "config_o",
+        "data_type_o",
+        "calibration_o",
+        "quantizers_o"
       ],
-      "keyFiles": ["quark/onnx/quantization/api.py", "quark/onnx/quantization/quantize.py", "quark/onnx/quantization/config/config.py"]
+      "keyFiles": [
+        "quark/onnx/quantization/api.py",
+        "quark/onnx/quantization/quantize.py",
+        "quark/onnx/quantization/config/config.py"
+      ]
     },
     {
       "id": "layer_onnx_algorithms",
@@ -78,7 +144,11 @@
       "nodeIds": [
         "n1_b5"
       ],
-      "keyFiles": ["quark/onnx/algorithm/__init__.py", "quark/onnx/algorithm/s/", "quark/onnx/algorithm/gptq/"]
+      "keyFiles": [
+        "quark/onnx/algorithm/__init__.py",
+        "quark/onnx/algorithm/s/",
+        "quark/onnx/algorithm/gptq/"
+      ]
     },
     {
       "id": "layer_onnx_optimizations",
@@ -87,7 +157,9 @@
       "nodeIds": [
         "n2_b5"
       ],
-      "keyFiles": ["quark/onnx/optimizations/__init__.py"]
+      "keyFiles": [
+        "quark/onnx/optimizations/__init__.py"
+      ]
     },
     {
       "id": "layer_auto_search",
@@ -96,7 +168,9 @@
       "nodeIds": [
         "n3_b5"
       ],
-      "keyFiles": ["quark/onnx/quantization/auto_search/__init__.py"]
+      "keyFiles": [
+        "quark/onnx/quantization/auto_search/__init__.py"
+      ]
     },
     {
       "id": "layer_onnx_adapter",
@@ -105,7 +179,10 @@
       "nodeIds": [
         "n4_b5"
       ],
-      "keyFiles": ["quark/onnx_adapter/__init__.py", "quark/onnx_adapter/onnx_adapter_pass.py"]
+      "keyFiles": [
+        "quark/onnx_adapter/__init__.py",
+        "quark/onnx_adapter/onnx_adapter_pass.py"
+      ]
     },
     {
       "id": "layer_cli",
@@ -114,16 +191,22 @@
       "nodeIds": [
         "n5_b5"
       ],
-      "keyFiles": ["quark/experimental/cli/main.py"]
+      "keyFiles": [
+        "quark/experimental/cli/main.py"
+      ]
     },
     {
       "id": "layer_contrib",
       "name": "贡献模块",
       "description": "贡献工具与扩展。llm_eval 提供 LLM 评估集成（perplexity、lm-eval-harness、ROUGE、MLPerf）。onnx_utils 提供 Ryzen AI 硬件相关工具（自定义 ONNX 算子、140+ 图变换 Pass、模型预处理/后处理）。",
       "nodeIds": [
-        "n6_b5", "n7_b5"
+        "n6_b5",
+        "n7_b5"
       ],
-      "keyFiles": ["quark/contrib/llm_eval/evaluation.py", "quark/contrib/onnx_utils/__init__.py"]
+      "keyFiles": [
+        "quark/contrib/llm_eval/evaluation.py",
+        "quark/contrib/onnx_utils/__init__.py"
+      ]
     }
   ],
   "tour": [
@@ -131,170 +214,1131 @@
       "order": 1,
       "title": "项目概览与入口",
       "description": "从顶层包和项目元数据开始，了解 Quark 的整体定位和架构。阅读 README、pyproject.toml 了解项目目标、依赖和构建系统。然后进入 quark/__init__.py 和 quark/torch/__init__.py、quark/onnx/__init__.py 了解双后端架构的顶层接口。",
-      "nodeIds": ["quark.__init__", "quark.torch.__init__", "quark.onnx.__init__"]
+      "nodeIds": [
+        "quark.__init__",
+        "quark.torch.__init__",
+        "quark.onnx.__init__"
+      ]
     },
     {
       "order": 2,
       "title": "共享基础类型",
       "description": "深入 quark/shares/，理解跨后端共享的抽象基类。重点关注 data_type.py（30+ 种量化数据类型定义）和 config.py（三层配置基类）。这些基类定义了 PyTorch 和 ONNX 后端的共同抽象。",
-      "nodeIds": ["quark.shares.config", "quark.shares.data_type", "quark.shares.utils.log"]
+      "nodeIds": [
+        "quark.shares.config",
+        "quark.shares.data_type",
+        "quark.shares.utils.log"
+      ]
     },
     {
       "order": 3,
       "title": "PyTorch 量化核心流水线",
       "description": "学习 PyTorch 量化主流程。从 ModelQuantizer（api.py）作为用户入口，理解三步流水线：① 配置解析（QConfig → QLayerConfig → QTensorConfig） ② 模型转换（算子替换为 QuantLinear/QuantConv2d） ③ 校准与伪量化（ScaledFakeQuantize 系列）。",
-      "nodeIds": ["n1", "n2", "n3", "n4", "n9", "n10", "n11", "n20", "n21", "n22"]
+      "nodeIds": [
+        "n1",
+        "n2",
+        "n3",
+        "n4",
+        "n9",
+        "n10",
+        "n11",
+        "n20",
+        "n21",
+        "n22"
+      ]
     },
     {
       "order": 4,
       "title": "LLM 量化配置模板",
       "description": "学习 LLMTemplate 系统如何简化 LLM 量化配置。理解 QuantizationSchemeCollection、预注册的 30+ 模型模板、以及如何通过一行代码生成完整的量化配置。",
-      "nodeIds": ["n8", "n5"]
+      "nodeIds": [
+        "n8",
+        "n5"
+      ]
     },
     {
       "order": 5,
       "title": "高级量化算法",
       "description": "探索 PTQ 增强算法。PyTorch 后端：AWQ（激活感知）、GPTQ（Hessian 最优）、Rotation（正交变换优化）。ONNX 后端：SmoothQuant、CLE、QuaRot、GPTQ、AdaRound、AutoMixPrecision。理解算法注册与调度机制。",
-      "nodeIds": ["n1_alg", "n2_alg", "n3_alg", "n4_alg", "n1_b5"]
+      "nodeIds": [
+        "n1_alg",
+        "n2_alg",
+        "n3_alg",
+        "n4_alg",
+        "n1_b5"
+      ]
     },
     {
       "order": 6,
       "title": "ONNX 量化流水线",
       "description": "学习 ONNX 后端的量化流程。从 ModelQuantizer.quantize_model() 入口，跟踪 quantize_static() 完整流水线：模型加载 → 预处理 → 校准 → 量化器创建 → QDQ 节点插入 → 后处理 → 优化。理解校准方法、量化器类型和数据读取器的协作关系。",
-      "nodeIds": ["api_o", "quantize_o", "config_o", "calibration_o", "quantizers_o"]
+      "nodeIds": [
+        "api_o",
+        "quantize_o",
+        "config_o",
+        "calibration_o",
+        "quantizers_o"
+      ]
     },
     {
       "order": 7,
       "title": "量化内核与硬件仿真",
       "description": "深入底层量化内核实现。学习自定义 autograd Function（FP8/MX/LSQ/TQT）的量化/反量化逻辑，理解硬件仿真层如何在没有实际硬件的情况下验证量化效果。关注 torch.compile 加速和张量并行支持。",
-      "nodeIds": ["n7_alg"]
+      "nodeIds": [
+        "n7_alg"
+      ]
     },
     {
       "order": 8,
       "title": "模型导出与部署",
       "description": "学习模型导出流程。理解 Safetensors/ONNX/GGUF 三种导出格式的差异和适用场景。关注 BaseExporter 抽象基类和各格式导出器的实现，以及 HuggingFace 模型导入/导出功能。",
-      "nodeIds": ["n5_alg"]
+      "nodeIds": [
+        "n5_alg"
+      ]
     },
     {
       "order": 9,
       "title": "CLI 与自动化",
       "description": "学习 quark-cli 命令行工具的使用和扩展。理解 8 个子命令的注册机制、argparse 配置和 CLI 类层次结构。结合自动搜索（AutoSearch）理解自动化配置调优的流程。",
-      "nodeIds": ["n5_b5", "n3_b5"]
+      "nodeIds": [
+        "n5_b5",
+        "n3_b5"
+      ]
     },
     {
       "order": 10,
       "title": "测试与评估",
       "description": "了解测试架构和 LLM 评估工具。浏览 test/ 目录了解 ~190+ 测试用例的组织方式。学习 quark/contrib/llm_eval/ 中的 LLM 评估集成（perplexity、lm-eval-harness）。",
-      "nodeIds": ["n6_b5"]
+      "nodeIds": [
+        "n6_b5"
+      ]
     }
   ],
   "nodes": [
-    {"id": "quark.__init__", "type": "module", "name": "quark", "filePath": "quark/__init__.py", "summary": "Quark 工具的顶层入口模块，尝试从内部 version 模块获取版本号。", "tags": ["package-init", "version"], "complexity": 1},
-    {"id": "quark.shares.__init__", "type": "module", "name": "quark.shares", "filePath": "quark/shares/__init__.py", "summary": "共享模块的空包初始化文件，当前仅包含版权声明。", "tags": ["package-init", "shared-module"], "complexity": 1},
-    {"id": "quark.shares.config", "type": "module", "name": "quark.shares.config", "filePath": "quark/shares/config.py", "summary": "量化配置基类定义。BaseQConfig/BaseQLayerConfig/BaseQTensorConfig 等抽象类，支持字典序列化。", "tags": ["configuration", "dataclass", "abstract-base", "serialization"], "complexity": 5},
-    {"id": "quark.shares.data_type", "type": "module", "name": "quark.shares.data_type", "filePath": "quark/shares/data_type.py", "summary": "量化数据类型体系，包含 30+ 种具体量化类型（Int4-FP8 等），额外引入特殊 MX 格式。", "tags": ["data-type", "enum", "quantization", "base-classes"], "complexity": 4},
-    {"id": "quark.shares.utils.import_utils", "type": "module", "name": "quark.shares.utils.import_utils", "filePath": "quark/shares/utils/import_utils.py", "summary": "第三方包可用性检测与版本管理，为 torch/transformers/vllm 等提供预检测。", "tags": ["utility", "package-detection", "import-management"], "complexity": 4},
-    {"id": "quark.shares.utils.log", "type": "module", "name": "quark.shares.utils.log", "filePath": "quark/shares/utils/log.py", "summary": "自定义日志模块，支持 ANSI 颜色、去重过滤和 log_errors 装饰器。", "tags": ["logging", "color-output", "decorator"], "complexity": 4},
-    {"id": "quark.torch.__init__", "type": "module", "name": "quark.torch", "filePath": "quark/torch/__init__.py", "summary": "PyTorch 后端包入口，统一导出 ModelQuantizer/ModelPruner/export 系列/LLMTemplate。", "tags": ["package-init", "pytorch", "export"], "complexity": 2},
-    {"id": "quark.onnx.__init__", "type": "module", "name": "quark.onnx", "filePath": "quark/onnx/__init__.py", "summary": "ONNX 后端包入口，从校准、配置、自动搜索等子模块汇集并导出全部公开 API。", "tags": ["package-init", "onnx", "quantization"], "complexity": 3},
-
-    {"id": "n1", "type": "class", "name": "ModelQuantizer(Torch)", "filePath": "quark/torch/quantization/api.py", "summary": "PyTorch 量化核心入口类，封装完整量化流水线：配置验证、eager/fx 模式准备、算法应用、校准、冻结和序列化。", "tags": ["量化入口", "pipeline", "校准", "eager/fx"], "complexity": 8},
-    {"id": "n2", "type": "class", "name": "QConfig(Torch)", "filePath": "quark/torch/quantization/config/config.py", "summary": "顶层量化配置，global_quant_config/layer_type_config/layer_config 三层优先级，集成 algo_config 和 kv_cache 配置。", "tags": ["量化配置", "分层配置", "算法配置"], "complexity": 7},
-    {"id": "n3", "type": "class", "name": "QLayerConfig(Torch)", "filePath": "quark/torch/quantization/config/config.py", "summary": "单层量化配置，定义 input/output/weight/bias 张量的量化规格，支持层级继承。", "tags": ["分层配置", "张量规格", "继承"], "complexity": 5},
-    {"id": "n4", "type": "class", "name": "QTensorConfig(Torch)", "filePath": "quark/torch/quantization/config/config.py", "summary": "张量量化规格，dtype/qscheme/symmetric/round_method/scale_type 等完整参数，含严格校验。", "tags": ["张量规格", "观测器", "校验"], "complexity": 6},
-    {"id": "n5", "type": "class", "name": "DataTypeSpec(Torch)", "filePath": "quark/torch/quantization/config/config.py", "summary": "量化规格工厂，Int4PerGroupSpec/FP8E4M3PerTensorSpec 等预设子类，支持 TwoStage 逐级量化。", "tags": ["工厂模式", "预设精度", "MX格式"], "complexity": 6},
-    {"id": "n6", "type": "enum", "name": "Dtype(Torch)", "filePath": "quark/torch/quantization/config/type.py", "summary": "量化数据类型枚举：int2-32/uint4-32/float16/bfloat16/fp8/fp6/fp4/mx/bfp16。", "tags": ["数据类型", "位宽", "枚举"], "complexity": 4},
-    {"id": "n7", "type": "enum", "name": "QuantizationMode", "filePath": "quark/torch/quantization/config/type.py", "summary": "量化模式：eager_mode 和 fx_graph_mode。同时定义 QSchemeType/ScaleType/RoundType。", "tags": ["量化模式", "eager", "fx"], "complexity": 3},
-    {"id": "n8", "type": "class", "name": "LLMTemplate", "filePath": "quark/torch/quantization/config/template.py", "summary": "LLM 量化模板系统，预注册 30+ 模型模板（llama/qwen/deepseek），通过 QuantizationSchemeCollection 管理方案。", "tags": ["LLM模板", "量化方案", "模型匹配", "自动配置"], "complexity": 7},
-    {"id": "n9", "type": "class", "name": "FakeQuantizeBase", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "伪量化模块抽象基类，定义统一接口并提供静态工厂 get_fake_quantize()。", "tags": ["伪量化", "抽象基类", "工厂"], "complexity": 4},
-    {"id": "n10", "type": "class", "name": "ScaledFakeQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "带缩放伪量化基类，管理量化参数并调用 CUDA 内核执行 scaled_fake_quantize。", "tags": ["缩放伪量化", "CUDA内核", "torch.compile"], "complexity": 6},
-    {"id": "n11", "type": "class", "name": "StaticScaledFakeQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "静态伪量化模块，校准阶段通过 observer 收集统计量，支持冻结转换。", "tags": ["静态量化", "observer", "冻结"], "complexity": 5},
-    {"id": "n12", "type": "class", "name": "DynamicScaledFakeQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "动态伪量化模块，每次前向实时计算量化参数，MXFP4 使用融合内核。", "tags": ["动态量化", "实时计算", "MXFP4"], "complexity": 4},
-    {"id": "n13", "type": "class", "name": "NonScaledFakeQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "无缩放因子伪量化，用于 MX/BFP 等不需要 scale/zero_point 的数据类型。", "tags": ["无缩放量化", "MX格式", "BFP"], "complexity": 3},
-    {"id": "n14", "type": "class", "name": "SequentialQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "序列化量化容器，支持多阶段连续量化（如先量化张量再量化 scale）。", "tags": ["序列量化", "多阶段", "scale量化"], "complexity": 6},
-    {"id": "n15", "type": "class", "name": "FrozenScaledFakeQuantize", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "冻结伪量化，将已校准 scale/zero_point 固化，用于模型导出。", "tags": ["冻结量化", "导出", "buffer固化"], "complexity": 4},
-    {"id": "n16", "type": "function", "name": "calculate_qmin_qmax", "filePath": "quark/torch/quantization/utils.py", "summary": "根据量化类型返回 [qmin, qmax] 表示范围。", "tags": ["量化范围", "工具函数"], "complexity": 2},
-    {"id": "n17", "type": "function", "name": "get_dtype_params", "filePath": "quark/torch/quantization/utils.py", "summary": "解析数据类型位宽参数 (ebits, mbits, emax)，结果缓存。", "tags": ["位宽解析", "缓存"], "complexity": 2},
-    {"id": "n18", "type": "function", "name": "even_round", "filePath": "quark/torch/quantization/utils.py", "summary": "OCP MX 规范的 even-rounding 策略，计算共享指数缩放因子。", "tags": ["OCP MX", "even-rounding"], "complexity": 3},
-    {"id": "n19", "type": "function", "name": "count_calibration_tokens", "filePath": "quark/torch/quantization/utils.py", "summary": "统计校准数据总 token 数，用于 MoE 专家覆盖率检查。", "tags": ["token统计", "MoE", "校准"], "complexity": 2},
-    {"id": "n20", "type": "function", "name": "process_model_transformation", "filePath": "quark/torch/quantization/model_transformation.py", "summary": "eager 模式模型转换主函数，替换原始层为量化模块（QuantLinear 等）。", "tags": ["模型转换", "算子替换", "eager模式"], "complexity": 6},
-    {"id": "n21", "type": "function", "name": "setup_config_per_layer", "filePath": "quark/torch/quantization/model_transformation.py", "summary": "按优先级为每层分配量化配置，支持 fnmatch 模式匹配和排除列表。", "tags": ["配置分配", "模式匹配", "排除"], "complexity": 3},
-    {"id": "n22", "type": "function", "name": "in_place_replace_layer", "filePath": "quark/torch/quantization/model_transformation.py", "summary": "执行原地模块替换：nn.Linear → QuantLinear 等，输出替换统计。", "tags": ["原地替换", "from_float"], "complexity": 3},
-    {"id": "n23", "type": "function", "name": "prepare_for_attention_quant", "filePath": "quark/torch/quantization/model_transformation.py", "summary": "为 attention 模块的 softmax 输出添加量化支持（monkey-patch）。", "tags": ["attention量化", "softmax", "monkey-patch"], "complexity": 4},
-    {"id": "n24", "type": "function", "name": "enable_or_disable_quantizer", "filePath": "quark/torch/quantization/tensor_quantize.py", "summary": "批量启用/禁用量化器的 observer 和 fake_quant 功能。", "tags": ["量化开关", "控制"], "complexity": 1},
-
-    {"id": "n1_alg", "type": "module", "name": "Algorithm API(Torch)", "filePath": "quark/torch/algorithm/api.py", "summary": "PyTorch 高级量化算法统一入口，PROCESSOR_MAP 注册表驱动 AWQ/GPTQ/Rotation 等算法调度。", "tags": ["量化算法", "调度器", "算法注册"], "complexity": 7},
-    {"id": "n2_alg", "type": "module", "name": "AWQ Module", "filePath": "quark/torch/algorithm/awq/__init__.py", "summary": "AWQ 激活感知权重量化，通过分析激活分布搜索最佳逐通道缩放因子和裁剪阈值。", "tags": ["AWQ", "权重量化", "激活感知", "SmoothQuant"], "complexity": 8},
-    {"id": "n3_alg", "type": "module", "name": "GPTQ Module(Torch)", "filePath": "quark/torch/algorithm/gptq/__init__.py", "summary": "基于 Hessian 矩阵的逐列权重量化算法，使用 Cholesky 分解和激活顺序排序。", "tags": ["GPTQ", "Hessian", "逐列量化", "CUDA Graph"], "complexity": 9},
-    {"id": "n4_alg", "type": "module", "name": "Rotation Module", "filePath": "quark/torch/algorithm/rotation/__init__.py", "summary": "四层 Hadamard 正交旋转优化（R1-R4），支持在线/离线旋转、可训练平滑量化和 RMSNorm 融合。", "tags": ["Rotation", "Hadamard", "正交旋转", "Quarot/SpinQuant"], "complexity": 10},
-    {"id": "n5_alg", "type": "module", "name": "Export API(Torch)", "filePath": "quark/torch/export/api.py", "summary": "模型导出统一接口：Safetensors/ONNX/GGUF 格式，支持序列化/反序列化和配置重建。", "tags": ["模型导出", "Safetensors", "ONNX", "GGUF"], "complexity": 9},
-    {"id": "n6_alg", "type": "module", "name": "Pruning API", "filePath": "quark/torch/pruning/api.py", "summary": "模型剪枝 API：ModelPruner 编排预处理/剪枝算法/后处理/Blockwise 调优流水线。", "tags": ["模型剪枝", "OSSCAR", "Blockwise调优"], "complexity": 5},
-    {"id": "n7_alg", "type": "module", "name": "Kernel Init", "filePath": "quark/torch/kernel/__init__.py", "summary": "自定义 autograd Function 量化内核：FP8/MX/LSQ/TQT，支持 torch.compile 和 DTensor 分片。", "tags": ["自定义算子", "FakeQuantize", "FP8", "LSQ/TQT"], "complexity": 9},
-
-    {"id": "api_o", "type": "class", "name": "ModelQuantizer(ONNX)", "filePath": "quark/onnx/quantization/api.py", "summary": "ONNX 量化 API 入口类，封装静态/动态量化调度，支持新旧两套配置 API 兼容。", "tags": ["量化入口", "API", "ONNX"], "complexity": 7},
-    {"id": "quantize_o", "type": "module", "name": "quantize_static/dynamic", "filePath": "quark/onnx/quantization/quantize.py", "summary": "ONNX 量化核心执行模块：静态量化覆盖模型加载→预处理→校准→量化→后处理全流程。", "tags": ["量化核心", "校准", "预处理", "后处理"], "complexity": 10},
-    {"id": "config_o", "type": "class", "name": "Config/QConfig(ONNX)", "filePath": "quark/onnx/quantization/config/config.py", "summary": "ONNX 量化配置，支持三层优先级（global/specific_layer/layer_type）和算法配置集成。", "tags": ["配置", "分层量化", "兼容"], "complexity": 5},
-    {"id": "data_type_o", "type": "class", "name": "DataType(ONNX)", "filePath": "quark/onnx/quantization/config/data_type.py", "summary": "ONNX 数据类型体系，Int4-UInt32/Float16-BFloat16/BFP/MX 系列，映射到 ORT QuantType。", "tags": ["数据类型", "ONNX映射", "MX", "BFP"], "complexity": 4},
-    {"id": "calibration_o", "type": "package", "name": "calibration(ONNX)", "filePath": "quark/onnx/calibration/__init__.py", "summary": "校准子包：数据读取器（Cached/Path/Random）、校准方法（Int16/PowerOfTwo/LayerWise）、张量范围持久化。", "tags": ["校准", "数据读取器", "张量统计"], "complexity": 2},
-    {"id": "quantizers_o", "type": "package", "name": "quantizers(ONNX)", "filePath": "quark/onnx/quantizers/__init__.py", "summary": "量化器子包：操作类型选择、量化器工厂（static/dynamic/matmul_nbits）和 QDQ 执行函数。", "tags": ["量化器", "QDQ插入", "操作类型"], "complexity": 2},
-
-    {"id": "n1_b5", "type": "package", "name": "Algorithm(ONNX)", "filePath": "quark/onnx/algorithm/__init__.py", "summary": "ONNX PTQ 算法总入口：SmoothQuant/CLE/QuaRot/GPTQ/BiasCorrection/AdaRound/AdaQuant/AutoMixPrecision。", "tags": ["PTQ算法", "SmoothQuant", "GPTQ", "QuaRot"], "complexity": 5},
-    {"id": "n2_b5", "type": "package", "name": "Optimizations(ONNX)", "filePath": "quark/onnx/optimizations/__init__.py", "summary": "ONNX 图优化入口：模型优化器、ONNX Runtime/ONNX Slim 优化、转换流水线。", "tags": ["图优化", "模型转换"], "complexity": 3},
-    {"id": "n3_b5", "type": "package", "name": "AutoSearch", "filePath": "quark/onnx/quantization/auto_search/__init__.py", "summary": "自动精度搜索：AutoSearch/AutoSearchPro 搜索器、SearchSpace 空间定义、配置生成映射。", "tags": ["自动搜索", "精度优化", "配置生成"], "complexity": 4},
-    {"id": "n4_b5", "type": "package", "name": "ONNXAdapter", "filePath": "quark/onnx_adapter/__init__.py", "summary": "ONNX 适配器：24 种图变换 Pass（BN折叠/算子融合/形状固定/布局转换）、Pass/Engine 架构。", "tags": ["适配器", "图变换", "Pass"], "complexity": 3},
-    {"id": "n5_b5", "type": "module", "name": "CLI_Main", "filePath": "quark/experimental/cli/main.py", "summary": "quark-cli 主入口：8 个子命令注册（onnx-ptq/autosearch/export/validate/adapter/torch-llm-ptq）。", "tags": ["CLI", "argparse", "子命令"], "complexity": 6},
-    {"id": "n6_b5", "type": "module", "name": "LLMEval", "filePath": "quark/contrib/llm_eval/evaluation.py", "summary": "LLM 评估工具：perplexity/KV-Cache PPL/lm-eval-harness/ROUGE/MLPerf，支持 PT+ONNX GenAI。", "tags": ["LLM评估", "perplexity", "lm-eval"], "complexity": 9},
-    {"id": "n7_b5", "type": "module", "name": "ONNXUtils", "filePath": "quark/contrib/onnx_utils/__init__.py", "summary": "Ryzen AI ONNX 工具：自定义 ONNX 算子（BFP/MX/Hybrid LLM）、140+ 图变换 Pass、模型预处理。", "tags": ["Ryzen AI", "自定义算子", "图变换"], "complexity": 2}
+    {
+      "id": "quark.__init__",
+      "type": "module",
+      "name": "quark",
+      "filePath": "quark/__init__.py",
+      "summary": "Quark 工具的顶层入口模块，尝试从内部 version 模块获取版本号。",
+      "tags": [
+        "package-init",
+        "version"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "quark.shares.__init__",
+      "type": "module",
+      "name": "quark.shares",
+      "filePath": "quark/shares/__init__.py",
+      "summary": "共享模块的空包初始化文件，当前仅包含版权声明。",
+      "tags": [
+        "package-init",
+        "shared-module"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "quark.shares.config",
+      "type": "module",
+      "name": "quark.shares.config",
+      "filePath": "quark/shares/config.py",
+      "summary": "量化配置基类定义。BaseQConfig/BaseQLayerConfig/BaseQTensorConfig 等抽象类，支持字典序列化。",
+      "tags": [
+        "configuration",
+        "dataclass",
+        "abstract-base",
+        "serialization"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "quark.shares.data_type",
+      "type": "module",
+      "name": "quark.shares.data_type",
+      "filePath": "quark/shares/data_type.py",
+      "summary": "量化数据类型体系，包含 30+ 种具体量化类型（Int4-FP8 等），额外引入特殊 MX 格式。",
+      "tags": [
+        "data-type",
+        "enum",
+        "quantization",
+        "base-classes"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "quark.shares.utils.import_utils",
+      "type": "module",
+      "name": "quark.shares.utils.import_utils",
+      "filePath": "quark/shares/utils/import_utils.py",
+      "summary": "第三方包可用性检测与版本管理，为 torch/transformers/vllm 等提供预检测。",
+      "tags": [
+        "utility",
+        "package-detection",
+        "import-management"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "quark.shares.utils.log",
+      "type": "module",
+      "name": "quark.shares.utils.log",
+      "filePath": "quark/shares/utils/log.py",
+      "summary": "自定义日志模块，支持 ANSI 颜色、去重过滤和 log_errors 装饰器。",
+      "tags": [
+        "logging",
+        "color-output",
+        "decorator"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "quark.torch.__init__",
+      "type": "module",
+      "name": "quark.torch",
+      "filePath": "quark/torch/__init__.py",
+      "summary": "PyTorch 后端包入口，统一导出 ModelQuantizer/ModelPruner/export 系列/LLMTemplate。",
+      "tags": [
+        "package-init",
+        "pytorch",
+        "export"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "quark.onnx.__init__",
+      "type": "module",
+      "name": "quark.onnx",
+      "filePath": "quark/onnx/__init__.py",
+      "summary": "ONNX 后端包入口，从校准、配置、自动搜索等子模块汇集并导出全部公开 API。",
+      "tags": [
+        "package-init",
+        "onnx",
+        "quantization"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n1",
+      "type": "class",
+      "name": "ModelQuantizer(Torch)",
+      "filePath": "quark/torch/quantization/api.py",
+      "summary": "PyTorch 量化核心入口类，封装完整量化流水线：配置验证、eager/fx 模式准备、算法应用、校准、冻结和序列化。",
+      "tags": [
+        "量化入口",
+        "pipeline",
+        "校准",
+        "eager/fx"
+      ],
+      "complexity": 8
+    },
+    {
+      "id": "n2",
+      "type": "class",
+      "name": "QConfig(Torch)",
+      "filePath": "quark/torch/quantization/config/config.py",
+      "summary": "顶层量化配置，global_quant_config/layer_type_config/layer_config 三层优先级，集成 algo_config 和 kv_cache 配置。",
+      "tags": [
+        "量化配置",
+        "分层配置",
+        "算法配置"
+      ],
+      "complexity": 7
+    },
+    {
+      "id": "n3",
+      "type": "class",
+      "name": "QLayerConfig(Torch)",
+      "filePath": "quark/torch/quantization/config/config.py",
+      "summary": "单层量化配置，定义 input/output/weight/bias 张量的量化规格，支持层级继承。",
+      "tags": [
+        "分层配置",
+        "张量规格",
+        "继承"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "n4",
+      "type": "class",
+      "name": "QTensorConfig(Torch)",
+      "filePath": "quark/torch/quantization/config/config.py",
+      "summary": "张量量化规格，dtype/qscheme/symmetric/round_method/scale_type 等完整参数，含严格校验。",
+      "tags": [
+        "张量规格",
+        "观测器",
+        "校验"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n5",
+      "type": "class",
+      "name": "DataTypeSpec(Torch)",
+      "filePath": "quark/torch/quantization/config/config.py",
+      "summary": "量化规格工厂，Int4PerGroupSpec/FP8E4M3PerTensorSpec 等预设子类，支持 TwoStage 逐级量化。",
+      "tags": [
+        "工厂模式",
+        "预设精度",
+        "MX格式"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n6",
+      "type": "enum",
+      "name": "Dtype(Torch)",
+      "filePath": "quark/torch/quantization/config/type.py",
+      "summary": "量化数据类型枚举：int2-32/uint4-32/float16/bfloat16/fp8/fp6/fp4/mx/bfp16。",
+      "tags": [
+        "数据类型",
+        "位宽",
+        "枚举"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n7",
+      "type": "enum",
+      "name": "QuantizationMode",
+      "filePath": "quark/torch/quantization/config/type.py",
+      "summary": "量化模式：eager_mode 和 fx_graph_mode。同时定义 QSchemeType/ScaleType/RoundType。",
+      "tags": [
+        "量化模式",
+        "eager",
+        "fx"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n8",
+      "type": "class",
+      "name": "LLMTemplate",
+      "filePath": "quark/torch/quantization/config/template.py",
+      "summary": "LLM 量化模板系统，预注册 30+ 模型模板（llama/qwen/deepseek），通过 QuantizationSchemeCollection 管理方案。",
+      "tags": [
+        "LLM模板",
+        "量化方案",
+        "模型匹配",
+        "自动配置"
+      ],
+      "complexity": 7
+    },
+    {
+      "id": "n9",
+      "type": "class",
+      "name": "FakeQuantizeBase",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "伪量化模块抽象基类，定义统一接口并提供静态工厂 get_fake_quantize()。",
+      "tags": [
+        "伪量化",
+        "抽象基类",
+        "工厂"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n10",
+      "type": "class",
+      "name": "ScaledFakeQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "带缩放伪量化基类，管理量化参数并调用 CUDA 内核执行 scaled_fake_quantize。",
+      "tags": [
+        "缩放伪量化",
+        "CUDA内核",
+        "torch.compile"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n11",
+      "type": "class",
+      "name": "StaticScaledFakeQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "静态伪量化模块，校准阶段通过 observer 收集统计量，支持冻结转换。",
+      "tags": [
+        "静态量化",
+        "observer",
+        "冻结"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "n12",
+      "type": "class",
+      "name": "DynamicScaledFakeQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "动态伪量化模块，每次前向实时计算量化参数，MXFP4 使用融合内核。",
+      "tags": [
+        "动态量化",
+        "实时计算",
+        "MXFP4"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n13",
+      "type": "class",
+      "name": "NonScaledFakeQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "无缩放因子伪量化，用于 MX/BFP 等不需要 scale/zero_point 的数据类型。",
+      "tags": [
+        "无缩放量化",
+        "MX格式",
+        "BFP"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n14",
+      "type": "class",
+      "name": "SequentialQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "序列化量化容器，支持多阶段连续量化（如先量化张量再量化 scale）。",
+      "tags": [
+        "序列量化",
+        "多阶段",
+        "scale量化"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n15",
+      "type": "class",
+      "name": "FrozenScaledFakeQuantize",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "冻结伪量化，将已校准 scale/zero_point 固化，用于模型导出。",
+      "tags": [
+        "冻结量化",
+        "导出",
+        "buffer固化"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n16",
+      "type": "function",
+      "name": "calculate_qmin_qmax",
+      "filePath": "quark/torch/quantization/utils.py",
+      "summary": "根据量化类型返回 [qmin, qmax] 表示范围。",
+      "tags": [
+        "量化范围",
+        "工具函数"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "n17",
+      "type": "function",
+      "name": "get_dtype_params",
+      "filePath": "quark/torch/quantization/utils.py",
+      "summary": "解析数据类型位宽参数 (ebits, mbits, emax)，结果缓存。",
+      "tags": [
+        "位宽解析",
+        "缓存"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "n18",
+      "type": "function",
+      "name": "even_round",
+      "filePath": "quark/torch/quantization/utils.py",
+      "summary": "OCP MX 规范的 even-rounding 策略，计算共享指数缩放因子。",
+      "tags": [
+        "OCP MX",
+        "even-rounding"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n19",
+      "type": "function",
+      "name": "count_calibration_tokens",
+      "filePath": "quark/torch/quantization/utils.py",
+      "summary": "统计校准数据总 token 数，用于 MoE 专家覆盖率检查。",
+      "tags": [
+        "token统计",
+        "MoE",
+        "校准"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "n20",
+      "type": "function",
+      "name": "process_model_transformation",
+      "filePath": "quark/torch/quantization/model_transformation.py",
+      "summary": "eager 模式模型转换主函数，替换原始层为量化模块（QuantLinear 等）。",
+      "tags": [
+        "模型转换",
+        "算子替换",
+        "eager模式"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n21",
+      "type": "function",
+      "name": "setup_config_per_layer",
+      "filePath": "quark/torch/quantization/model_transformation.py",
+      "summary": "按优先级为每层分配量化配置，支持 fnmatch 模式匹配和排除列表。",
+      "tags": [
+        "配置分配",
+        "模式匹配",
+        "排除"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n22",
+      "type": "function",
+      "name": "in_place_replace_layer",
+      "filePath": "quark/torch/quantization/model_transformation.py",
+      "summary": "执行原地模块替换：nn.Linear → QuantLinear 等，输出替换统计。",
+      "tags": [
+        "原地替换",
+        "from_float"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n23",
+      "type": "function",
+      "name": "prepare_for_attention_quant",
+      "filePath": "quark/torch/quantization/model_transformation.py",
+      "summary": "为 attention 模块的 softmax 输出添加量化支持（monkey-patch）。",
+      "tags": [
+        "attention量化",
+        "softmax",
+        "monkey-patch"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n24",
+      "type": "function",
+      "name": "enable_or_disable_quantizer",
+      "filePath": "quark/torch/quantization/tensor_quantize.py",
+      "summary": "批量启用/禁用量化器的 observer 和 fake_quant 功能。",
+      "tags": [
+        "量化开关",
+        "控制"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "n1_alg",
+      "type": "module",
+      "name": "Algorithm API(Torch)",
+      "filePath": "quark/torch/algorithm/api.py",
+      "summary": "PyTorch 高级量化算法统一入口，PROCESSOR_MAP 注册表驱动 AWQ/GPTQ/Rotation 等算法调度。",
+      "tags": [
+        "量化算法",
+        "调度器",
+        "算法注册"
+      ],
+      "complexity": 7
+    },
+    {
+      "id": "n2_alg",
+      "type": "module",
+      "name": "AWQ Module",
+      "filePath": "quark/torch/algorithm/awq/__init__.py",
+      "summary": "AWQ 激活感知权重量化，通过分析激活分布搜索最佳逐通道缩放因子和裁剪阈值。",
+      "tags": [
+        "AWQ",
+        "权重量化",
+        "激活感知",
+        "SmoothQuant"
+      ],
+      "complexity": 8
+    },
+    {
+      "id": "n3_alg",
+      "type": "module",
+      "name": "GPTQ Module(Torch)",
+      "filePath": "quark/torch/algorithm/gptq/__init__.py",
+      "summary": "基于 Hessian 矩阵的逐列权重量化算法，使用 Cholesky 分解和激活顺序排序。",
+      "tags": [
+        "GPTQ",
+        "Hessian",
+        "逐列量化",
+        "CUDA Graph"
+      ],
+      "complexity": 9
+    },
+    {
+      "id": "n4_alg",
+      "type": "module",
+      "name": "Rotation Module",
+      "filePath": "quark/torch/algorithm/rotation/__init__.py",
+      "summary": "四层 Hadamard 正交旋转优化（R1-R4），支持在线/离线旋转、可训练平滑量化和 RMSNorm 融合。",
+      "tags": [
+        "Rotation",
+        "Hadamard",
+        "正交旋转",
+        "Quarot/SpinQuant"
+      ],
+      "complexity": 10
+    },
+    {
+      "id": "n5_alg",
+      "type": "module",
+      "name": "Export API(Torch)",
+      "filePath": "quark/torch/export/api.py",
+      "summary": "模型导出统一接口：Safetensors/ONNX/GGUF 格式，支持序列化/反序列化和配置重建。",
+      "tags": [
+        "模型导出",
+        "Safetensors",
+        "ONNX",
+        "GGUF"
+      ],
+      "complexity": 9
+    },
+    {
+      "id": "n6_alg",
+      "type": "module",
+      "name": "Pruning API",
+      "filePath": "quark/torch/pruning/api.py",
+      "summary": "模型剪枝 API：ModelPruner 编排预处理/剪枝算法/后处理/Blockwise 调优流水线。",
+      "tags": [
+        "模型剪枝",
+        "OSSCAR",
+        "Blockwise调优"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "n7_alg",
+      "type": "module",
+      "name": "Kernel Init",
+      "filePath": "quark/torch/kernel/__init__.py",
+      "summary": "自定义 autograd Function 量化内核：FP8/MX/LSQ/TQT，支持 torch.compile 和 DTensor 分片。",
+      "tags": [
+        "自定义算子",
+        "FakeQuantize",
+        "FP8",
+        "LSQ/TQT"
+      ],
+      "complexity": 9
+    },
+    {
+      "id": "api_o",
+      "type": "class",
+      "name": "ModelQuantizer(ONNX)",
+      "filePath": "quark/onnx/quantization/api.py",
+      "summary": "ONNX 量化 API 入口类，封装静态/动态量化调度，支持新旧两套配置 API 兼容。",
+      "tags": [
+        "量化入口",
+        "API",
+        "ONNX"
+      ],
+      "complexity": 7
+    },
+    {
+      "id": "quantize_o",
+      "type": "module",
+      "name": "quantize_static/dynamic",
+      "filePath": "quark/onnx/quantization/quantize.py",
+      "summary": "ONNX 量化核心执行模块：静态量化覆盖模型加载→预处理→校准→量化→后处理全流程。",
+      "tags": [
+        "量化核心",
+        "校准",
+        "预处理",
+        "后处理"
+      ],
+      "complexity": 10
+    },
+    {
+      "id": "config_o",
+      "type": "class",
+      "name": "Config/QConfig(ONNX)",
+      "filePath": "quark/onnx/quantization/config/config.py",
+      "summary": "ONNX 量化配置，支持三层优先级（global/specific_layer/layer_type）和算法配置集成。",
+      "tags": [
+        "配置",
+        "分层量化",
+        "兼容"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "data_type_o",
+      "type": "class",
+      "name": "DataType(ONNX)",
+      "filePath": "quark/onnx/quantization/config/data_type.py",
+      "summary": "ONNX 数据类型体系，Int4-UInt32/Float16-BFloat16/BFP/MX 系列，映射到 ORT QuantType。",
+      "tags": [
+        "数据类型",
+        "ONNX映射",
+        "MX",
+        "BFP"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "calibration_o",
+      "type": "package",
+      "name": "calibration(ONNX)",
+      "filePath": "quark/onnx/calibration/__init__.py",
+      "summary": "校准子包：数据读取器（Cached/Path/Random）、校准方法（Int16/PowerOfTwo/LayerWise）、张量范围持久化。",
+      "tags": [
+        "校准",
+        "数据读取器",
+        "张量统计"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "quantizers_o",
+      "type": "package",
+      "name": "quantizers(ONNX)",
+      "filePath": "quark/onnx/quantizers/__init__.py",
+      "summary": "量化器子包：操作类型选择、量化器工厂（static/dynamic/matmul_nbits）和 QDQ 执行函数。",
+      "tags": [
+        "量化器",
+        "QDQ插入",
+        "操作类型"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "n1_b5",
+      "type": "package",
+      "name": "Algorithm(ONNX)",
+      "filePath": "quark/onnx/algorithm/__init__.py",
+      "summary": "ONNX PTQ 算法总入口：SmoothQuant/CLE/QuaRot/GPTQ/BiasCorrection/AdaRound/AdaQuant/AutoMixPrecision。",
+      "tags": [
+        "PTQ算法",
+        "SmoothQuant",
+        "GPTQ",
+        "QuaRot"
+      ],
+      "complexity": 5
+    },
+    {
+      "id": "n2_b5",
+      "type": "package",
+      "name": "Optimizations(ONNX)",
+      "filePath": "quark/onnx/optimizations/__init__.py",
+      "summary": "ONNX 图优化入口：模型优化器、ONNX Runtime/ONNX Slim 优化、转换流水线。",
+      "tags": [
+        "图优化",
+        "模型转换"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n3_b5",
+      "type": "package",
+      "name": "AutoSearch",
+      "filePath": "quark/onnx/quantization/auto_search/__init__.py",
+      "summary": "自动精度搜索：AutoSearch/AutoSearchPro 搜索器、SearchSpace 空间定义、配置生成映射。",
+      "tags": [
+        "自动搜索",
+        "精度优化",
+        "配置生成"
+      ],
+      "complexity": 4
+    },
+    {
+      "id": "n4_b5",
+      "type": "package",
+      "name": "ONNXAdapter",
+      "filePath": "quark/onnx_adapter/__init__.py",
+      "summary": "ONNX 适配器：24 种图变换 Pass（BN折叠/算子融合/形状固定/布局转换）、Pass/Engine 架构。",
+      "tags": [
+        "适配器",
+        "图变换",
+        "Pass"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "n5_b5",
+      "type": "module",
+      "name": "CLI_Main",
+      "filePath": "quark/experimental/cli/main.py",
+      "summary": "quark-cli 主入口：8 个子命令注册（onnx-ptq/autosearch/export/validate/adapter/torch-llm-ptq）。",
+      "tags": [
+        "CLI",
+        "argparse",
+        "子命令"
+      ],
+      "complexity": 6
+    },
+    {
+      "id": "n6_b5",
+      "type": "module",
+      "name": "LLMEval",
+      "filePath": "quark/contrib/llm_eval/evaluation.py",
+      "summary": "LLM 评估工具：perplexity/KV-Cache PPL/lm-eval-harness/ROUGE/MLPerf，支持 PT+ONNX GenAI。",
+      "tags": [
+        "LLM评估",
+        "perplexity",
+        "lm-eval"
+      ],
+      "complexity": 9
+    },
+    {
+      "id": "n7_b5",
+      "type": "module",
+      "name": "ONNXUtils",
+      "filePath": "quark/contrib/onnx_utils/__init__.py",
+      "summary": "Ryzen AI ONNX 工具：自定义 ONNX 算子（BFP/MX/Hybrid LLM）、140+ 图变换 Pass、模型预处理。",
+      "tags": [
+        "Ryzen AI",
+        "自定义算子",
+        "图变换"
+      ],
+      "complexity": "moderate"
+    }
   ],
   "edges": [
-    {"source": "quark.__init__", "target": "quark.shares.__init__", "type": "imports", "weight": 0.7},
-    {"source": "quark.torch.__init__", "target": "n1", "type": "imports", "weight": 0.7},
-    {"source": "quark.torch.__init__", "target": "n8", "type": "imports", "weight": 0.7},
-    {"source": "quark.onnx.__init__", "target": "api_o", "type": "imports", "weight": 0.7},
-    {"source": "quark.shares.config", "target": "quark.shares.data_type", "type": "imports", "weight": 0.7},
-    {"source": "n1", "target": "n2", "type": "depends_on", "weight": 0.8},
-    {"source": "n1", "target": "n7", "type": "depends_on", "weight": 0.7},
-    {"source": "n1", "target": "n20", "type": "calls", "weight": 0.8},
-    {"source": "n1", "target": "n11", "type": "calls", "weight": 0.7},
-    {"source": "n2", "target": "n3", "type": "contains", "weight": 0.9},
-    {"source": "n3", "target": "n4", "type": "contains", "weight": 0.9},
-    {"source": "n4", "target": "n6", "type": "depends_on", "weight": 0.7},
-    {"source": "n5", "target": "n4", "type": "depends_on", "weight": 0.7},
-    {"source": "n8", "target": "n2", "type": "depends_on", "weight": 0.8},
-    {"source": "n8", "target": "n5", "type": "calls", "weight": 0.7},
-    {"source": "n9", "target": "n4", "type": "depends_on", "weight": 0.7},
-    {"source": "n10", "target": "n16", "type": "calls", "weight": 0.7},
-    {"source": "n11", "target": "n10", "type": "inherits", "weight": 0.9},
-    {"source": "n12", "target": "n10", "type": "inherits", "weight": 0.9},
-    {"source": "n13", "target": "n9", "type": "inherits", "weight": 0.9},
-    {"source": "n14", "target": "n11", "type": "contains", "weight": 0.8},
-    {"source": "n15", "target": "n10", "type": "calls", "weight": 0.7},
-    {"source": "n20", "target": "n21", "type": "calls", "weight": 0.8},
-    {"source": "n20", "target": "n22", "type": "calls", "weight": 0.8},
-    {"source": "n20", "target": "n23", "type": "calls", "weight": 0.7},
-    {"source": "n20", "target": "n2", "type": "depends_on", "weight": 0.7},
-    {"source": "n1_alg", "target": "n2_alg", "type": "imports", "weight": 0.8},
-    {"source": "n1_alg", "target": "n3_alg", "type": "imports", "weight": 0.8},
-    {"source": "n1_alg", "target": "n4_alg", "type": "imports", "weight": 0.8},
-    {"source": "n1_alg", "target": "n7_alg", "type": "imports", "weight": 0.7},
-    {"source": "n2_alg", "target": "n7_alg", "type": "calls", "weight": 0.7},
-    {"source": "n3_alg", "target": "n7_alg", "type": "calls", "weight": 0.7},
-    {"source": "n4_alg", "target": "n7_alg", "type": "calls", "weight": 0.7},
-    {"source": "n5_alg", "target": "n4_alg", "type": "imports", "weight": 0.7},
-    {"source": "n5_alg", "target": "n7_alg", "type": "imports", "weight": 0.7},
-    {"source": "n6_alg", "target": "n1_alg", "type": "calls", "weight": 0.7},
-    {"source": "api_o", "target": "config_o", "type": "imports", "weight": 0.7},
-    {"source": "api_o", "target": "quantize_o", "type": "calls", "weight": 0.9},
-    {"source": "api_o", "target": "n1_b5", "type": "imports", "weight": 0.7},
-    {"source": "quantize_o", "target": "calibration_o", "type": "imports", "weight": 0.8},
-    {"source": "quantize_o", "target": "quantizers_o", "type": "imports", "weight": 0.8},
-    {"source": "config_o", "target": "n1_b5", "type": "imports", "weight": 0.7},
-    {"source": "config_o", "target": "data_type_o", "type": "imports", "weight": 0.7},
-    {"source": "n5_b5", "target": "n3_b5", "type": "imports", "weight": 0.7},
-    {"source": "n5_b5", "target": "n4_b5", "type": "imports", "weight": 0.7},
-    {"source": "n5_b5", "target": "api_o", "type": "imports", "weight": 0.7},
-    {"source": "n5_b5", "target": "n6_b5", "type": "imports", "weight": 0.7},
-    {"source": "n6_b5", "target": "quark.shares.utils.log", "type": "imports", "weight": 0.7},
-    {"source": "n7_b5", "target": "quark.onnx.__init__", "type": "depends_on", "weight": 0.6}
+    {
+      "source": "quark.__init__",
+      "target": "quark.shares.__init__",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "quark.torch.__init__",
+      "target": "n1",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "quark.torch.__init__",
+      "target": "n8",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "quark.onnx.__init__",
+      "target": "api_o",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "quark.shares.config",
+      "target": "quark.shares.data_type",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n1",
+      "target": "n2",
+      "type": "depends_on",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n1",
+      "target": "n7",
+      "type": "depends_on",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n1",
+      "target": "n20",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n1",
+      "target": "n11",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "type": "contains",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "type": "contains",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "n4",
+      "target": "n6",
+      "type": "depends_on",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5",
+      "target": "n4",
+      "type": "depends_on",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n8",
+      "target": "n2",
+      "type": "depends_on",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n8",
+      "target": "n5",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n9",
+      "target": "n4",
+      "type": "depends_on",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n10",
+      "target": "n16",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n11",
+      "target": "n10",
+      "type": "inherits",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "n12",
+      "target": "n10",
+      "type": "inherits",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "n13",
+      "target": "n9",
+      "type": "inherits",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "n14",
+      "target": "n11",
+      "type": "contains",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n15",
+      "target": "n10",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n20",
+      "target": "n21",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n20",
+      "target": "n22",
+      "type": "calls",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n20",
+      "target": "n23",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n20",
+      "target": "n2",
+      "type": "depends_on",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n1_alg",
+      "target": "n2_alg",
+      "type": "imports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n1_alg",
+      "target": "n3_alg",
+      "type": "imports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n1_alg",
+      "target": "n4_alg",
+      "type": "imports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "n1_alg",
+      "target": "n7_alg",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n2_alg",
+      "target": "n7_alg",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n3_alg",
+      "target": "n7_alg",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n4_alg",
+      "target": "n7_alg",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_alg",
+      "target": "n4_alg",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_alg",
+      "target": "n7_alg",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n6_alg",
+      "target": "n1_alg",
+      "type": "calls",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "api_o",
+      "target": "config_o",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "api_o",
+      "target": "quantize_o",
+      "type": "calls",
+      "weight": 0.9,
+      "direction": "forward"
+    },
+    {
+      "source": "api_o",
+      "target": "n1_b5",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "quantize_o",
+      "target": "calibration_o",
+      "type": "imports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "quantize_o",
+      "target": "quantizers_o",
+      "type": "imports",
+      "weight": 0.8,
+      "direction": "forward"
+    },
+    {
+      "source": "config_o",
+      "target": "n1_b5",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "config_o",
+      "target": "data_type_o",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_b5",
+      "target": "n3_b5",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_b5",
+      "target": "n4_b5",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_b5",
+      "target": "api_o",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n5_b5",
+      "target": "n6_b5",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n6_b5",
+      "target": "quark.shares.utils.log",
+      "type": "imports",
+      "weight": 0.7,
+      "direction": "forward"
+    },
+    {
+      "source": "n7_b5",
+      "target": "quark.onnx.__init__",
+      "type": "depends_on",
+      "weight": 0.6,
+      "direction": "forward"
+    }
   ]
 }
