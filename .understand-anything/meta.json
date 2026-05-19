@@ -1,11 +1,12 @@
 {
-  "version": "2.7.0",
-  "createdAt": "2026-05-15T19:04:37.721851Z",
-  "gitCommitHash": "40406053be016d1f33a7256fe00de363c851118c",
+  "lastAnalyzedAt": "2026-05-19T05:48:06.024908+00:00",
+  "gitCommitHash": "739d3bba4e36940b08d219f10d63b2dcfcf2d146",
+  "version": "1.0.0",
+  "analyzedFiles": 306,
   "outputLanguage": "zh",
-  "nodeCount": 52,
-  "edgeCount": 49,
-  "layerCount": 12,
-  "tourSteps": 10,
+  "nodeCount": 870,
+  "edgeCount": 1785,
+  "layerCount": 8,
+  "tourSteps": 12,
   "analysisMode": "full"
 }

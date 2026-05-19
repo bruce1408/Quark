@@ -5,1222 +5,1108 @@
     "languages": [
       "Python",
       "C++",
-      "CUDA"
+      "CUDA",
+      "CMake",
+      "Protocol Buffers",
+      "YAML",
+      "TOML",
+      "Shell",
+      "Markdown"
     ],
     "frameworks": [
       "PyTorch",
       "ONNX",
       "ONNX Runtime",
-      "Transformers"
+      "CUDA",
+      "ROCm",
+      "Transformers",
+      "GGUF",
+      "Safetensors",
+      "Pydantic",
+      "Pytest"
     ],
-    "description": "Quark 是一个跨平台深度学习模型量化工具包，核心业务是将高精度模型转换为低精度格式以部署在 AMD GPU、Ryzen AI NPU 等硬件上，同时尽可能保持模型精度。",
-    "analyzedAt": "2025-05-16T07:00:00Z",
-    "gitCommitHash": "40406053be016d1f33a7256fe00de363c851118c"
+    "description": "AMD Quark 是一款全面的跨平台深度学习模型量化工具包。支持 PyTorch 和 ONNX 后端，提供静态/动态量化、多种校准方法、高级 PTQ 算法（AWQ、GPTQ、SmoothQuant、QuaRot、Rotation），以及模型剪枝功能。可部署至多种硬件后端（AMD GPU、Ryzen AI NPU、ONNX Runtime）。支持 LLM 量化、扩散模型量化、CV 模型量化等场景，提供 GGUF、Safetensors、ONNX 等多种导出格式。",
+    "analyzedAt": "2026-05-19T05:47:13.624625+00:00",
+    "gitCommitHash": "739d3bba4e36940b08d219f10d63b2dcfcf2d146"
   },
-  "nodes": [
+  "domains": [
     {
       "id": "domain:model-quantization",
-      "type": "domain",
       "name": "模型量化",
-      "summary": "Quark 的核心业务域，负责将深度学习模型从高精度量化到低精度格式（INT4/INT8/FP8/MX等）。覆盖 PyTorch 和 ONNX 两大后端。",
-      "tags": [
-        "量化",
-        "模型压缩",
-        "低精度推理"
+      "description": "模型量化是 Quark 的核心业务领域，负责将深度学习模型的权重和激活从高精度浮点数（FP32/FP16）转换为低精度整数（INT8/INT4 等）或低精度浮点数，在保持模型精度的前提下显著减少模型体积与推理延迟。涵盖 PyTorch 后端（假量化模块、张量量化、量化神经网络层）和 ONNX 后端（静态量化器、动态量化器、MatMulNBits 量化器）两大路径。",
+      "flows": [
+        {
+          "id": "flow:model-quantization-torch-static",
+          "name": "PyTorch 静态量化流程",
+          "description": "通过假量化（Fake Quantization）方式对 PyTorch 模型执行静态后训练量化，包括配置量化策略、替换层为量化模块、执行量化图追踪与优化、生成量化模型。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "构建量化配置：定义目标张量和层的量化数据类型、观察器策略、舍入方式等参数（数据类型涵盖 Int2-Int32、FP4-FP16、MX 格式）",
+              "nodeIds": [
+                "file:quark/shares/data_type.py",
+                "file:quark/shares/config.py",
+                "file:quark/torch/quantization/config/config.py",
+                "file:quark/torch/quantization/config/type.py",
+                "class:quark/shares/config.py:BaseQConfig"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "图追踪与层替换：将浮点模型转换为 FX 图表示，将 Conv2d/Linear/ConvTranspose2d 等层替换为对应的量化模块（QuantConv2d/QuantLinear 等）",
+              "nodeIds": [
+                "file:quark/torch/quantization/graph/trace.py",
+                "file:quark/torch/quantization/graph/fx/prepare_fx.py",
+                "file:quark/torch/quantization/graph/optimization/pre_quant/replace_linear_to_qtlinear.py",
+                "file:quark/torch/quantization/graph/optimization/pre_quant/replace_conv2d_to_qtconv2d.py",
+                "file:quark/torch/quantization/graph/optimization/pre_quant/replace_convtranspose2d_to_qtconvtranspose2d.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "模型变换：执行量化前模型结构变换，包括按层分配配置、KV Cache 量化准备、注意力层量化准备和原地层替换",
+              "nodeIds": [
+                "file:quark/torch/quantization/model_transformation.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "执行张量级量化：使用假量化操作（FakeQuantize）将权重和激活映射到目标精度，支持静态/动态/冻结/非缩放等多种量化模式",
+              "nodeIds": [
+                "file:quark/torch/quantization/tensor_quantize.py",
+                "file:quark/torch/quantization/nn/modules/quantize_linear.py",
+                "file:quark/torch/quantization/nn/modules/quantize_conv.py",
+                "file:quark/torch/quantization/nn/modules/quantize_pool.py"
+              ]
+            },
+            {
+              "order": 5,
+              "description": "图优化：对量化后的 FX 图进行优化，包括融合 SiLU 为 Sigmoid+Mul 等算子融合和死代码消除",
+              "nodeIds": [
+                "file:quark/torch/quantization/graph/optimization/optimize_graph.py",
+                "file:quark/torch/quantization/graph/optimization/pre_quant/replace_silu_2_sigmoid_mul.py",
+                "file:quark/torch/quantization/graph/optimization/pre_quant/replace_transposeconv_bn_to_qt_model.py"
+              ]
+            },
+            {
+              "order": 6,
+              "description": "生成量化模型：编译量化图并输出完整的量化 PyTorch 模型",
+              "nodeIds": [
+                "file:quark/torch/quantization/__init__.py",
+                "file:quark/torch/__init__.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/shares/data_type.py",
+            "file:quark/shares/config.py",
+            "file:quark/torch/quantization/config/config.py",
+            "file:quark/torch/quantization/config/type.py",
+            "file:quark/torch/quantization/graph/trace.py",
+            "file:quark/torch/quantization/graph/fx/prepare_fx.py",
+            "file:quark/torch/quantization/graph/optimization/pre_quant/replace_linear_to_qtlinear.py",
+            "file:quark/torch/quantization/graph/optimization/pre_quant/replace_conv2d_to_qtconv2d.py",
+            "file:quark/torch/quantization/model_transformation.py",
+            "file:quark/torch/quantization/tensor_quantize.py",
+            "file:quark/torch/quantization/nn/modules/quantize_linear.py",
+            "file:quark/torch/quantization/nn/modules/quantize_conv.py",
+            "file:quark/torch/quantization/graph/optimization/optimize_graph.py",
+            "file:quark/torch/__init__.py"
+          ]
+        },
+        {
+          "id": "flow:model-quantization-onnx-static",
+          "name": "ONNX 静态量化流程",
+          "description": "对 ONNX 模型执行静态后训练量化。通过校准数据收集激活统计信息，将浮点 ONNX 算子图转换为带 Quantize-Dequantize 节点的量化图，支持 AdaRound 精细调优。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "加载量化配置：从 JSON 或字典构建量化配置（QConfig），指定精度、校准策略和算法参数",
+              "nodeIds": [
+                "file:quark/onnx/quantization/config/config.py",
+                "file:quark/onnx/quantization/config/data_type.py",
+                "file:quark/onnx/quantization/quantize_config.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行校准：使用校准数据集在 ONNX Runtime 上推理，收集每层激活的统计信息（min/max、直方图等）用于计算量化参数",
+              "nodeIds": [
+                "file:quark/onnx/calibration/calibrate.py",
+                "file:quark/onnx/calibration/calib_utils.py",
+                "file:quark/onnx/calibration/interface.py",
+                "file:quark/onnx/calibration/data_reader.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "算子级量化变换：StaticQuantizer 基于校准数据对 ONNX 图执行 QDQ 插入，将浮点算子替换为带量化参数的等效算子",
+              "nodeIds": [
+                "file:quark/onnx/quantizers/static.py",
+                "file:quark/onnx/quantizers/base.py",
+                "file:quark/onnx/quantizers/utils.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "构造自定义量化算子：CustomOpFactory 生成支持特定量化方案的 ONNX 自定义算子实例（如 MatMulNBits）",
+              "nodeIds": [
+                "file:quark/onnx/operators/customop_factory.py"
+              ]
+            },
+            {
+              "order": 5,
+              "description": "编排执行量化主流程：quantize_static 高层函数将校准、量化器调度、后处理管线串联为完整的静态量化流程",
+              "nodeIds": [
+                "file:quark/onnx/quantization/quantize.py",
+                "file:quark/onnx/utils/quantize_utils.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/quantization/quantize.py",
+            "file:quark/onnx/quantization/config/config.py",
+            "file:quark/onnx/quantization/quantize_config.py",
+            "file:quark/onnx/calibration/calibrate.py",
+            "file:quark/onnx/quantizers/static.py",
+            "file:quark/onnx/operators/customop_factory.py",
+            "file:quark/onnx/__init__.py"
+          ]
+        },
+        {
+          "id": "flow:model-quantization-onnx-dynamic",
+          "name": "ONNX 动态量化流程",
+          "description": "对 ONNX 模型执行动态量化，在推理时根据实际数据动态计算量化参数，无需预先校准，适合对激活量化精度不敏感的场景。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "配置动态量化参数：指定权重量化精度和目标算子类型（如 MatMul、Conv）",
+              "nodeIds": [
+                "file:quark/onnx/quantization/config/config.py",
+                "file:quark/onnx/quantization/config/data_type.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "动态量化器执行：DynamicQuantizer 对 ONNX 图进行动态量化变换，无需校准数据即可插入 QDQ 节点",
+              "nodeIds": [
+                "file:quark/onnx/quantizers/dynamic.py",
+                "file:quark/onnx/quantizers/base.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "输出动态量化模型：quantize_dynamic 函数封装完整流程并输出 ONNX 模型",
+              "nodeIds": [
+                "file:quark/onnx/quantization/quantize.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/quantization/quantize.py",
+            "file:quark/onnx/quantizers/dynamic.py",
+            "file:quark/onnx/quantization/config/config.py"
+          ]
+        }
       ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entities": [
-          "ModelQuantizer",
-          "QConfig",
-          "FakeQuantize"
-        ],
-        "businessRules": [
-          "配置优先级: 逐层 > 按类型 > 全局",
-          "静态量化需校准 / 动态无需校准"
-        ],
-        "crossDomainInteractions": [
-          "接收模型优化域的算法配置",
-          "输出量化模型到部署域"
-        ]
-      }
+      "nodeIds": [
+        "file:quark/torch/__init__.py",
+        "file:quark/torch/quantization/__init__.py",
+        "file:quark/torch/quantization/config/config.py",
+        "file:quark/torch/quantization/config/type.py",
+        "file:quark/torch/quantization/tensor_quantize.py",
+        "file:quark/torch/quantization/model_transformation.py",
+        "file:quark/torch/quantization/graph/trace.py",
+        "file:quark/torch/quantization/graph/fx/prepare_fx.py",
+        "file:quark/torch/quantization/graph/optimization/optimize_graph.py",
+        "file:quark/torch/quantization/nn/modules/quantize_linear.py",
+        "file:quark/torch/quantization/nn/modules/quantize_conv.py",
+        "file:quark/shares/data_type.py",
+        "file:quark/shares/config.py",
+        "file:quark/onnx/__init__.py",
+        "file:quark/onnx/quantization/quantize.py",
+        "file:quark/onnx/quantization/config/config.py",
+        "file:quark/onnx/quantizers/static.py",
+        "file:quark/onnx/quantizers/dynamic.py",
+        "file:quark/onnx/operators/customop_factory.py"
+      ]
     },
     {
-      "id": "domain:model-optimization",
-      "type": "domain",
-      "name": "模型优化",
-      "summary": "提供高级 PTQ 增强算法，在量化前后优化模型以提升量化精度。包括 AWQ/GPTQ/Rotation/SmoothQuant/QuaRot/AdaRound/AutoMixPrecision。",
-      "tags": [
-        "PTQ优化",
-        "算法",
-        "精度提升"
+      "id": "domain:data-calibration",
+      "name": "数据校准",
+      "description": "数据校准是量化流程中获取激活统计信息的关键环节。在校准阶段，使用代表性数据集在浮点模型上运行推理，收集各层的激活值范围（min/max）、直方图分布等统计信息，为后续量化参数计算（scale、zero_point）提供数据基础。覆盖 PyTorch 后端的观察器系统（17 种观察器）和 ONNX 后端的校准管线（支持 PowerOfTwo 和 FloatScale 策略）。",
+      "flows": [
+        {
+          "id": "flow:data-calibration-torch-observer",
+          "name": "PyTorch 激活观察器校准",
+          "description": "在校准数据集上运行 PyTorch 模型前向传播，使用观察器（Observer）收集每层张量的统计信息以计算量化 scale 和 zero_point。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "选择并初始化观察器：根据量化配置选择适合的观察器类型（MinMaxObserver、MovingAverageObserver、HistogramObserver 等，支持 per-tensor/per-channel/per-block/per-group 策略）",
+              "nodeIds": [
+                "file:quark/torch/quantization/observer/observer.py",
+                "file:quark/torch/quantization/observer/lsq_observer.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "加载校准数据：加载校准 DataLoader（支持图像数据集通过 timm/torchvision 加载，文本数据集通过 tokenizer 处理）",
+              "nodeIds": [
+                "file:quark/torch/utils/data_utils.py",
+                "file:quark/torch/utils/llm/tokenizer.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "执行校准前向传播：遍历校准数据批次，运行模型前向传播并触发观察器收集统计量",
+              "nodeIds": [
+                "file:quark/torch/quantization/calibrate.py",
+                "file:quark/torch/quantization/scheduler.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "计算量化参数：从观察器收集的统计信息中计算 scale 和 zero_point，用于后续张量量化",
+              "nodeIds": [
+                "file:quark/torch/quantization/observer/observer.py",
+                "file:quark/torch/quantization/utils.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/quantization/observer/observer.py",
+            "file:quark/torch/quantization/observer/lsq_observer.py",
+            "file:quark/torch/quantization/calibrate.py",
+            "file:quark/torch/quantization/scheduler.py",
+            "file:quark/torch/utils/data_utils.py"
+          ]
+        },
+        {
+          "id": "flow:data-calibration-onnx-calibrate",
+          "name": "ONNX 校准数据收集",
+          "description": "在 ONNX Runtime 上使用校准数据集推理，收集每层激活的统计信息（数据分布、直方图），为静态量化提供量化参数。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "配置校准数据集：根据模型类型（CV/LLM）选择数据读取器（支持 ImageNet 图像、WikiText-2/Pile 文本）",
+              "nodeIds": [
+                "file:quark/onnx/calibration/data_reader.py",
+                "file:quark/experimental/cli/quark_onnx/helper_utils.py",
+                "class:quark/experimental/cli/quark_onnx/helper_utils.py:LLMDataReader",
+                "class:quark/experimental/cli/quark_onnx/helper_utils.py:NpyDataReader"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "选择校准策略：指定校准算法（PowerOfTwo 最小化截断误差 / FloatScale 直接映射）和校准方法（MinMax、Entropy、Percentile）",
+              "nodeIds": [
+                "file:quark/onnx/calibration/calibrate.py",
+                "file:quark/onnx/calibration/methods.py",
+                "file:quark/onnx/calibration/interface.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "运行 ORT 校准推理：在 ONNX Runtime 上执行校准数据推理，收集中间层激活的分布信息",
+              "nodeIds": [
+                "file:quark/onnx/calibration/calibrate.py",
+                "file:quark/onnx/calibration/calib_utils.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "生成量化参数：根据收集的统计信息计算每层的 scale 和 zero_point，供 StaticQuantizer 使用",
+              "nodeIds": [
+                "file:quark/onnx/calibration/calibrate.py",
+                "file:quark/onnx/utils/tensor_utils.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/calibration/calibrate.py",
+            "file:quark/onnx/calibration/interface.py",
+            "file:quark/onnx/calibration/data_reader.py",
+            "file:quark/onnx/calibration/methods.py",
+            "file:quark/experimental/cli/quark_onnx/helper_utils.py"
+          ]
+        }
       ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entities": [
-          "AWQProcessor",
-          "GptqProcessor",
-          "RotationProcessor"
-        ],
-        "businessRules": [
-          "算法按注册顺序执行",
-          "GPTQ 需要 Hessian 矩阵"
-        ],
-        "crossDomainInteractions": [
-          "向量化域注入算法配置",
-          "使用评估域验证优化效果"
-        ]
-      }
+      "nodeIds": [
+        "file:quark/torch/quantization/observer/observer.py",
+        "file:quark/torch/quantization/observer/lsq_observer.py",
+        "file:quark/torch/quantization/calibrate.py",
+        "file:quark/torch/quantization/scheduler.py",
+        "file:quark/onnx/calibration/calibrate.py",
+        "file:quark/onnx/calibration/interface.py",
+        "file:quark/onnx/calibration/data_reader.py",
+        "file:quark/onnx/calibration/methods.py",
+        "file:quark/experimental/cli/quark_onnx/helper_utils.py"
+      ]
     },
     {
-      "id": "domain:model-deployment",
-      "type": "domain",
-      "name": "模型部署",
-      "summary": "将量化后模型导出为可部署格式。支持 ONNX（通用）、GGUF（LLM）、JSON-Safetensors（Quark原生）三种导出格式，并提供 ONNX 图适配器进行部署前图优化。",
-      "tags": [
-        "导出",
-        "ONNX",
-        "GGUF",
-        "硬件适配"
+      "id": "domain:algorithm-optimization",
+      "name": "高级算法优化",
+      "description": "高级算法优化领域提供超越基础量化的精度恢复和优化技术。在前沿 LLM 量化场景中，基础量化往往导致显著的精度下降，需要借助 AWQ（激活感知权重量化）、GPTQ（基于 Hessian 的最优权重量化）、QuaRot（Hadamard 旋转）、SmoothQuant（激活平滑）等高级 PTQ 算法来补偿量化误差。该领域涵盖 Torch 后端（AWQ、GPTQ、QuaRot、Rotation、GPTAQ、OSSCAR、QRonos、Blockwise Tuning）和 ONNX 后端（Bias Correction、Smooth Quant、GPTQ、QuaRot、Cross Layer Equalization、Fast Finetuning、混合精度优化）。",
+      "flows": [
+        {
+          "id": "flow:algorithm-optimization-awq",
+          "name": "AWQ 激活感知权重量化",
+          "description": "通过分析激活值分布搜索最优的逐通道权重缩放因子，在几乎不增加计算开销的前提下显著提升低比特权重量化的精度。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "校准数据收集：在量化模型上运行校准数据集，收集每层激活值的分布信息",
+              "nodeIds": [
+                "file:quark/torch/algorithm/utils/calibration.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "搜索最优缩放因子：根据激活统计量在每个通道上搜索最优的权重大小缩放因子，最小化量化误差",
+              "nodeIds": [
+                "file:quark/torch/algorithm/awq/awq.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "应用缩放因子：将最优缩放因子应用到权重和激活上，完成 AWQ 精度优化",
+              "nodeIds": [
+                "file:quark/torch/algorithm/awq/awq.py",
+                "file:quark/torch/algorithm/utils/algorithm_utils.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/algorithm/awq/awq.py",
+            "file:quark/torch/algorithm/utils/calibration.py",
+            "file:quark/torch/algorithm/utils/algorithm_utils.py"
+          ]
+        },
+        {
+          "id": "flow:algorithm-optimization-gptq",
+          "name": "GPTQ 最优权重量化",
+          "description": "利用 Hessian 矩阵信息逐列进行贪心最优权重量化，支持 CUDA Graph 加速，在保持模型精度的前提下实现 4-bit 甚至更低的权重量化。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "计算 Hessian 信息：收集权重矩阵的二阶导数（Hessian）信息以评估每个权重量化的重要性",
+              "nodeIds": [
+                "file:quark/torch/algorithm/gptq/gptq.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "逐列贪心量化：基于 Hessian 信息，按列贪心地选择量化候选并补偿量化误差，支持 CUDA Graph 加速",
+              "nodeIds": [
+                "file:quark/torch/algorithm/gptq/gptq.py",
+                "file:quark/torch/algorithm/utils/algorithm_utils.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "应用量化结果：将最优量化权重写回模型，得到 GPTQ 优化的量化模型",
+              "nodeIds": [
+                "file:quark/torch/algorithm/gptq/gptq.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/algorithm/gptq/gptq.py",
+            "file:quark/torch/algorithm/utils/algorithm_utils.py"
+          ]
+        },
+        {
+          "id": "flow:algorithm-optimization-rotation",
+          "name": "QuaRot / Rotation 旋转量化",
+          "description": "通过 Hadamard 正交旋转或 Cayley 参数化旋转对权重和激活进行变换，使异常值分布更均匀，消除量化中的极端值问题，提升低比特量化精度。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "执行旋转变换：对模型权重和激活进行 Hadamard 旋转（支持在线/离线模式）或 Cayley 旋转，将异常值分散到多个通道",
+              "nodeIds": [
+                "file:quark/torch/algorithm/rotation/quarot.py",
+                "file:quark/torch/algorithm/rotation/hadamard.py",
+                "file:quark/torch/algorithm/rotation/online_hadamard.py",
+                "file:quark/torch/algorithm/rotation/cayley.py",
+                "file:quark/torch/algorithm/rotation/rotation.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "应用注意力模块校准：对旋转后的注意力层进行额外校准以保持推理精度",
+              "nodeIds": [
+                "file:quark/torch/algorithm/utils/attention.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "执行量化：在旋转后的模型上执行标准量化流程，获得旋转增强的量化模型",
+              "nodeIds": [
+                "file:quark/torch/algorithm/api.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/algorithm/rotation/quarot.py",
+            "file:quark/torch/algorithm/rotation/hadamard.py",
+            "file:quark/torch/algorithm/rotation/online_hadamard.py",
+            "file:quark/torch/algorithm/rotation/cayley.py",
+            "file:quark/torch/algorithm/rotation/rotation.py",
+            "file:quark/torch/algorithm/utils/attention.py"
+          ]
+        },
+        {
+          "id": "flow:algorithm-optimization-smoothquant",
+          "name": "SmoothQuant 激活平滑量化",
+          "description": "通过数学等价的变换将激活量化难度转移到权重上，将激活的平滑因子融合到相邻层权重中，有效降低激活量化的难度。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "计算平滑因子：根据激活数据统计量计算逐通道的平滑因子，用于均衡激活与权重的量化难度",
+              "nodeIds": [
+                "file:quark/onnx/algorithm/sq/smooth_quant.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "应用平滑：将平滑因子通过数学等价变换融合到相邻层权重中",
+              "nodeIds": [
+                "file:quark/onnx/algorithm/sq/smooth_quant.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "后处理优化：对平滑后的模型进行精度和偏置校正（Bias Correction）",
+              "nodeIds": [
+                "file:quark/onnx/algorithm/bc/bias_correction.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/algorithm/sq/smooth_quant.py",
+            "file:quark/onnx/algorithm/bc/bias_correction.py"
+          ]
+        },
+        {
+          "id": "flow:algorithm-optimization-autosearch",
+          "name": "量化策略自动搜索",
+          "description": "在定义的搜索空间中自动搜索最优的量化超参数组合（量化精度、校准策略等），通过自动搜索替代人工调优以找到精度最优的量化配置。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "定义搜索空间：构建包含量化精度、校准方法、策略选项等参数组合的搜索空间",
+              "nodeIds": [
+                "file:quark/onnx/quantization/auto_search/search_space.py",
+                "file:quark/onnx/quantization/auto_search/lib.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行搜索评估：在搜索空间中遍历候选配置，对每个候选执行量化并评估精度",
+              "nodeIds": [
+                "file:quark/onnx/quantization/auto_search/search.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "输出最优配置：返回精度最优的量化配置并应用至最终模型",
+              "nodeIds": [
+                "file:quark/onnx/quantization/auto_search/search.py",
+                "file:quark/experimental/cli/quark_onnx/onnx_ptq_autosearch.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/quantization/auto_search/search.py",
+            "file:quark/onnx/quantization/auto_search/search_space.py",
+            "file:quark/onnx/quantization/auto_search/lib.py",
+            "file:quark/experimental/cli/quark_onnx/onnx_ptq_autosearch.py"
+          ]
+        }
       ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entities": [
-          "BaseExporter",
-          "ONNXAdapterPass"
-        ],
-        "businessRules": [
-          "导出前必须冻结量化参数"
-        ],
-        "crossDomainInteractions": [
-          "接收量化域的冻结模型",
-          "为硬件部署提供优化图"
-        ]
-      }
+      "nodeIds": [
+        "file:quark/torch/algorithm/api.py",
+        "file:quark/torch/algorithm/awq/awq.py",
+        "file:quark/torch/algorithm/gptq/gptq.py",
+        "file:quark/torch/algorithm/rotation/quarot.py",
+        "file:quark/torch/algorithm/rotation/hadamard.py",
+        "file:quark/torch/algorithm/rotation/cayley.py",
+        "file:quark/torch/algorithm/rotation/rotation.py",
+        "file:quark/torch/algorithm/gptaq/gptaq.py",
+        "file:quark/torch/algorithm/osscar/osscar.py",
+        "file:quark/torch/algorithm/qronos/qronos.py",
+        "file:quark/torch/algorithm/blockwise_tuning/blockwise_tuning.py",
+        "file:quark/torch/algorithm/utils/calibration.py",
+        "file:quark/torch/algorithm/utils/attention.py",
+        "file:quark/onnx/algorithm/sq/smooth_quant.py",
+        "file:quark/onnx/algorithm/bc/bias_correction.py",
+        "file:quark/onnx/algorithm/cle/cle.py",
+        "file:quark/onnx/algorithm/gptq/gptq.py",
+        "file:quark/onnx/algorithm/quarot/quarot.py",
+        "file:quark/onnx/algorithm/finetuning/fast_finetune.py",
+        "file:quark/onnx/quantization/auto_search/search.py",
+        "file:quark/onnx/quantization/auto_search/search_space.py"
+      ]
+    },
+    {
+      "id": "domain:model-export",
+      "name": "模型导出与部署",
+      "description": "量化完成后，需要将模型导出为推理引擎可消费的部署格式。该领域处理从量化 PyTorch 模型到多种目标格式的转换，包括 GGUF（llama.cpp 兼容）、Safetensors（HuggingFace 生态）、ONNX（标准交换格式）、JSON（参数序列化）以及面向 Ryzen AI NPU 等 AMD 硬件平台的硬件仿真内核。",
+      "flows": [
+        {
+          "id": "flow:model-export-safetensors",
+          "name": "Safetensors 格式导出",
+          "description": "将量化后的 PyTorch 模型权重导出为 HuggingFace 生态标准的 Safetensors 格式，支持 LLM 模型的参数持久化和分发。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "冻结量化模型：将假量化模型中合并的量化参数固化到权重中，生成可以直接部署的冻结模型",
+              "nodeIds": [
+                "file:quark/torch/export/api.py",
+                "file:quark/torch/export/safetensors.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "构建 Safetensors 数据结构：根据模型层级结构构建 LLM 信息描述（LLMInfo）和参数信息（ParamsInfo）",
+              "nodeIds": [
+                "file:quark/torch/export/json_export/builder/llm_info_builder.py",
+                "file:quark/torch/export/json_export/builder/params_builder.py",
+                "file:quark/torch/export/json_export/builder/safetensors_builder.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "写入 Safetensors 文件：将权重和元数据序列化为 .safetensors 文件",
+              "nodeIds": [
+                "file:quark/torch/export/safetensors.py",
+                "file:quark/torch/export/json_export/api.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/export/api.py",
+            "file:quark/torch/export/safetensors.py",
+            "file:quark/torch/export/json_export/builder/llm_info_builder.py",
+            "file:quark/torch/export/json_export/builder/params_builder.py",
+            "file:quark/torch/export/json_export/builder/safetensors_builder.py"
+          ]
+        },
+        {
+          "id": "flow:model-export-gguf",
+          "name": "GGUF 格式导出",
+          "description": "将量化模型转换为 GGUF 格式，使其能在 llama.cpp 等高效的 CPU/GPU 混合推理引擎上运行。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "提取量化参数：从量化模型中读取每层的量化精度、scale 和 zero_point 信息",
+              "nodeIds": [
+                "file:quark/torch/export/gguf_export/quant_utils.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "构建 GGUF 模型：将模型结构信息转换为 GGUF 格式的元数据（model.py 定义 GGUF 模型表示）",
+              "nodeIds": [
+                "file:quark/torch/export/gguf_export/model.py",
+                "file:quark/torch/export/gguf_export/constants.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "写入 GGUF 文件：使用 GGUF Writer 将权重和元数据序列化为 .gguf 文件",
+              "nodeIds": [
+                "file:quark/torch/export/gguf_export/gguf_writer.py",
+                "file:quark/torch/export/gguf_export/api.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/export/gguf_export/api.py",
+            "file:quark/torch/export/gguf_export/gguf_writer.py",
+            "file:quark/torch/export/gguf_export/model.py",
+            "file:quark/torch/export/gguf_export/quant_utils.py",
+            "file:quark/torch/export/gguf_export/constants.py"
+          ]
+        },
+        {
+          "id": "flow:model-export-onnx",
+          "name": "ONNX 格式导出",
+          "description": "将量化 PyTorch 模型通过算子折叠和 Opset 版本转换导出为标准 ONNX 格式，或通过 ONNX Runtime GenAI 转换为优化的适配格式。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "量化算子折叠：将量化相关算子（FakeQuantize、Observer）折叠到邻近算子中，消除推理时不需要的量化模拟节点",
+              "nodeIds": [
+                "file:quark/torch/export/onnx.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "Opset 版本转换：将 ONNX 图转换到目标 opset 版本以确保与推理后端的兼容性",
+              "nodeIds": [
+                "file:quark/torch/export/onnx.py",
+                "file:quark/torch/export/config/config.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "导出 ONNX 文件：调用 torch.onnx.export 将量化模型导出为标准 ONNX 文件",
+              "nodeIds": [
+                "file:quark/torch/export/api.py",
+                "file:quark/experimental/cli/quark_onnx/export_onnx.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/export/api.py",
+            "file:quark/torch/export/onnx.py",
+            "file:quark/torch/export/config/config.py",
+            "file:quark/experimental/cli/quark_onnx/export_onnx.py",
+            "file:quark/experimental/cli/quark_onnx/export_oga.py"
+          ]
+        },
+        {
+          "id": "flow:model-export-hw-emulation",
+          "name": "硬件仿真部署",
+          "description": "提供面向 Ryzen AI NPU 等 AMD 硬件的量化/反量化仿真函数，以及 MX（Microscaling）格式的低精度内核，连接软件量化结果与硬件实际部署。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "加载硬件仿真接口：选择目标硬件平台的量化/反量化仿真函数（75 个仿真函数）",
+              "nodeIds": [
+                "file:quark/torch/kernel/hw_emulation/hw_emulation_interface.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "应用硬件仿真：使用 LSQ 和 TQT C++ 扩展执行面向硬件的量化模拟",
+              "nodeIds": [
+                "file:quark/torch/kernel/hw_emulation/extensions.py",
+                "file:quark/torch/kernel/hw_emulation/ops/mx_ops.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "MX 格式量化：使用 Microscaling 格式对模型进行低精度量化，支持 FP8/FP6/FP4 等 MX 规范精度",
+              "nodeIds": [
+                "file:quark/torch/kernel/mx/function.py",
+                "file:quark/torch/kernel/mx/module.py",
+                "file:quark/torch/kernel/mx/dtypes.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/kernel/hw_emulation/hw_emulation_interface.py",
+            "file:quark/torch/kernel/hw_emulation/extensions.py",
+            "file:quark/torch/kernel/hw_emulation/ops/mx_ops.py",
+            "file:quark/torch/kernel/mx/function.py",
+            "file:quark/torch/kernel/mx/module.py"
+          ]
+        }
+      ],
+      "nodeIds": [
+        "file:quark/torch/export/api.py",
+        "file:quark/torch/export/safetensors.py",
+        "file:quark/torch/export/onnx.py",
+        "file:quark/torch/export/config/config.py",
+        "file:quark/torch/export/gguf_export/api.py",
+        "file:quark/torch/export/gguf_export/gguf_writer.py",
+        "file:quark/torch/export/gguf_export/model.py",
+        "file:quark/torch/export/gguf_export/quant_utils.py",
+        "file:quark/torch/export/json_export/api.py",
+        "file:quark/torch/export/json_export/builder/safetensors_builder.py",
+        "file:quark/torch/kernel/hw_emulation/hw_emulation_interface.py",
+        "file:quark/torch/kernel/hw_emulation/extensions.py",
+        "file:quark/torch/kernel/mx/function.py"
+      ]
+    },
+    {
+      "id": "domain:graph-adaptation",
+      "name": "图优化与模型适配",
+      "description": "图优化与模型适配领域负责在量化之前对 ONNX 计算图进行规范化和优化变换，确保后续量化器处理的图结构干净、标准、可控。通过 20 余种图变换 Pass（BN 折叠、算子融合、布局转换、精度转换、算子版本转换等）以及后处理管线（精度校正、仿真验证），将异构来源的 ONNX 模型统一为量化友好的标准形态。",
+      "flows": [
+        {
+          "id": "flow:graph-adaptation-normalization",
+          "name": "ONNX 图标准化流程",
+          "description": "将异构来源的 ONNX 模型通过一系列 Pass 变换为标准化的量化友好形态，包括 BN 折叠、算子融合、形状修复和通用简化。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "加载 ONNX 适配器引擎：初始化 Engine，注册 20 余种内置 Pass 并解析运行配置",
+              "nodeIds": [
+                "file:quark/onnx_adapter/engine.py",
+                "file:quark/onnx_adapter/run_config.py",
+                "file:quark/onnx_adapter/utils.py",
+                "class:quark/onnx_adapter/engine.py:Engine"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行算子融合 Pass：融合 BN 到 Conv、GELU/InstanceNorm/LayerNorm/L2Norm 子图为单一算子",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_fold_batch_norm.py",
+                "file:quark/onnx_adapter/passes/onnx_convert_bn_to_conv.py",
+                "file:quark/onnx_adapter/passes/onnx_fold_batch_norm_after_concat.py",
+                "file:quark/onnx_adapter/passes/onnx_fuse_gelu.py",
+                "file:quark/onnx_adapter/passes/onnx_fuse_layer_norm.py",
+                "file:quark/onnx_adapter/passes/onnx_fuse_instance_norm.py",
+                "file:quark/onnx_adapter/passes/onnx_fuse_l2_norm.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "执行图规范化 Pass：修复张量形状、简化死代码、转换算子版本、移除冗余输入、复制共享初始化器",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_fix_shapes.py",
+                "file:quark/onnx_adapter/passes/onnx_simplify.py",
+                "file:quark/onnx_adapter/passes/onnx_convert_opset_version.py",
+                "file:quark/onnx_adapter/passes/onnx_remove_input_init.py",
+                "file:quark/onnx_adapter/passes/onnx_copy_bias_init.py",
+                "file:quark/onnx_adapter/passes/onnx_copy_shared_init.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "执行 ORT 通用优化：利用 ONNX Runtime 内置优化器进行通用图优化",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_optimize_with_ort.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx_adapter/engine.py",
+            "file:quark/onnx_adapter/run_config.py",
+            "file:quark/onnx_adapter/passes/onnx_fold_batch_norm.py",
+            "file:quark/onnx_adapter/passes/onnx_fuse_gelu.py",
+            "file:quark/onnx_adapter/passes/onnx_fuse_layer_norm.py",
+            "file:quark/onnx_adapter/passes/onnx_fix_shapes.py",
+            "file:quark/onnx_adapter/passes/onnx_simplify.py",
+            "file:quark/onnx_adapter/passes/onnx_optimize_with_ort.py"
+          ]
+        },
+        {
+          "id": "flow:graph-adaptation-hardware",
+          "name": "硬件兼容性适配流程",
+          "description": "针对特定推理后端（如 Ryzen AI NPU、仅支持特定算子集的推理引擎）的兼容性适配，包括数据布局转换、算子替换、精度转换。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "数据布局转换：将 NCHW 布局转换为 NHWC 布局，在转换兼容算子前后插入 Transpose 节点",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_convert_nchw_to_nhwc.py",
+                "class:quark/onnx_adapter/passes/onnx_convert_nchw_to_nhwc.py:ONNXConvertNCHWToNHWCPass"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "算子兼容性替换：将 Clip 转为 ReLU、ReduceMean 转为 GlobalAvgPool、Split 转为 Slice、大核池化拆分为小核序列",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_convert_clip_to_relu.py",
+                "file:quark/onnx_adapter/passes/onnx_convert_reduce_mean_to_global_avg_pool.py",
+                "file:quark/onnx_adapter/passes/onnx_convert_split_to_slice.py",
+                "file:quark/onnx_adapter/passes/onnx_split_large_kernel_pool.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "精度转换：将 FP16 权重和激活转换为 FP32 以确保在不支持半精度的推理后端上正确执行",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/onnx_convert_fp16_to_fp32.py",
+                "class:quark/onnx_adapter/passes/onnx_convert_fp16_to_fp32.py:ONNXConvertFP16ToFP32Pass"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "QDQ 节点清理：移除或替换不必要的 Quantize-Dequantize 节点以简化图结构",
+              "nodeIds": [
+                "file:quark/onnx_adapter/passes/remove_qdq.py",
+                "file:quark/onnx/tools/remove_qdq.py",
+                "file:quark/onnx/tools/remove_qdq_between_ops.py",
+                "file:quark/onnx/tools/remove_qdq_mul_add.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx_adapter/passes/onnx_convert_nchw_to_nhwc.py",
+            "file:quark/onnx_adapter/passes/onnx_convert_clip_to_relu.py",
+            "file:quark/onnx_adapter/passes/onnx_convert_reduce_mean_to_global_avg_pool.py",
+            "file:quark/onnx_adapter/passes/onnx_convert_split_to_slice.py",
+            "file:quark/onnx_adapter/passes/onnx_split_large_kernel_pool.py",
+            "file:quark/onnx_adapter/passes/onnx_convert_fp16_to_fp32.py",
+            "file:quark/onnx_adapter/passes/remove_qdq.py"
+          ]
+        },
+        {
+          "id": "flow:graph-adaptation-postprocess",
+          "name": "量化后处理优化流程",
+          "description": "在量化完成后对 ONNX 模型进行后处理优化，包括量化参数保存、精度校正和硬件仿真验证，确保量化模型在目标硬件上可正确运行。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "保存量化参数：从量化后的 ONNX 模型中提取并保存量化 scale/zero_point 等参数",
+              "nodeIds": [
+                "file:quark/onnx/postprocess/quantization_params_saver.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "精度校正：对量化后的权重进行校正（Weight Correction）以进一步减少精度损失",
+              "nodeIds": [
+                "file:quark/onnx/postprocess/refinement/weight_correction.py",
+                "file:quark/onnx/postprocess/refinement/interface.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "仿真验证：在目标硬件的仿真环境中运行量化模型，验证精度和正确性",
+              "nodeIds": [
+                "file:quark/onnx/postprocess/simulation/simulation.py",
+                "file:quark/onnx/postprocess/simulation/interface.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "格式转换工具：使用 20+ 工具脚本进行精度转换、算子格式转换、模型清理等辅助操作",
+              "nodeIds": [
+                "file:quark/onnx/tools/convert_fp16_to_bf16.py",
+                "file:quark/onnx/tools/convert_customqdq_to_qdq.py",
+                "file:quark/onnx/tools/convert_qdq_to_qop.py",
+                "file:quark/onnx/tools/convert_quant_to_float.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/postprocess/pipeline.py",
+            "file:quark/onnx/postprocess/quantization_params_saver.py",
+            "file:quark/onnx/postprocess/refinement/weight_correction.py",
+            "file:quark/onnx/postprocess/simulation/simulation.py",
+            "file:quark/onnx/tools/convert_fp16_to_bf16.py",
+            "file:quark/onnx/tools/convert_customqdq_to_qdq.py"
+          ]
+        }
+      ],
+      "nodeIds": [
+        "file:quark/onnx_adapter/__init__.py",
+        "file:quark/onnx_adapter/engine.py",
+        "file:quark/onnx_adapter/run_config.py",
+        "file:quark/onnx_adapter/onnx_adapter_pass.py",
+        "file:quark/onnx_adapter/passes/onnx_fold_batch_norm.py",
+        "file:quark/onnx_adapter/passes/onnx_fuse_gelu.py",
+        "file:quark/onnx_adapter/passes/onnx_fuse_layer_norm.py",
+        "file:quark/onnx_adapter/passes/onnx_fuse_instance_norm.py",
+        "file:quark/onnx_adapter/passes/onnx_convert_clip_to_relu.py",
+        "file:quark/onnx_adapter/passes/onnx_convert_nchw_to_nhwc.py",
+        "file:quark/onnx_adapter/passes/onnx_convert_fp16_to_fp32.py",
+        "file:quark/onnx_adapter/passes/onnx_convert_opset_version.py",
+        "file:quark/onnx_adapter/passes/onnx_fix_shapes.py",
+        "file:quark/onnx_adapter/passes/onnx_simplify.py",
+        "file:quark/onnx_adapter/passes/remove_qdq.py",
+        "file:quark/onnx/postprocess/pipeline.py",
+        "file:quark/onnx/postprocess/quantization_params_saver.py",
+        "file:quark/onnx/postprocess/refinement/weight_correction.py",
+        "file:quark/onnx/postprocess/simulation/simulation.py",
+        "file:quark/onnx/tools/convert_fp16_to_bf16.py",
+        "file:quark/onnx/tools/convert_customqdq_to_qdq.py",
+        "file:quark/onnx/tools/remove_qdq.py",
+        "file:quark/onnx/tools/random_quantize.py"
+      ]
     },
     {
       "id": "domain:model-evaluation",
-      "type": "domain",
       "name": "模型评估",
-      "summary": "对量化前后模型进行精度评估，确保量化损失在可接受范围。支持 perplexity 计算、lm-eval-harness 标准任务、ROUGE/METEOR 生成质量指标。",
-      "tags": [
-        "评估",
-        "精度验证",
-        "perplexity",
-        "lm-eval"
+      "description": "模型评估领域负责在量化前后对模型精度进行验证和评测，确保量化不会导致不可接受的精度损失。支持 LLM 模型（困惑度、WikiText-2 基准）和图像分类模型（Top-1 准确率、ImageNet 基准）两种主要评估范式，并提供 ONNX Runtime 和 PyTorch 两种推理后端的评估能力。",
+      "flows": [
+        {
+          "id": "flow:model-evaluation-llm",
+          "name": "LLM 困惑度评估",
+          "description": "使用 WikiText-2 数据集对量化后的语言模型进行困惑度评估，逐批次计算交叉熵损失以衡量量化对语言建模能力的影响。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "加载评估数据集：加载 WikiText-2 数据集并进行 tokenization，构建评估用文本序列",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/helper_utils.py:get_wikitext2",
+                "function:quark/experimental/cli/quark_onnx/helper_utils.py:get_pileval"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行 ORT 推理评估：加载 ONNX Runtime 会话，逐 batch 执行模型推理并计算交叉熵损失",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_wikitext_onnx",
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:llm_evaluation"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "计算困惑度指标：根据累积交叉熵损失计算整体困惑度（Perplexity），评估量化模型的文本生成质量",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_wikitext_onnx",
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:llm_evaluation"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/experimental/cli/quark_onnx/onnx_validate.py",
+            "file:quark/experimental/cli/quark_onnx/helper_utils.py",
+            "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_wikitext_onnx",
+            "function:quark/experimental/cli/quark_onnx/onnx_validate.py:llm_evaluation"
+          ]
+        },
+        {
+          "id": "flow:model-evaluation-cv",
+          "name": "图像分类准确率评估",
+          "description": "使用 ImageNet 数据集对量化后的图像分类模型进行 Top-1 准确率评估，验证量化对分类精度的影响。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "加载 ImageNet 数据集：通过 DataLoader 加载 ImageNet 验证集图像数据",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/helper_utils.py:load_dataloader"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行图像推理评估：在 ONNX Runtime 上运行图像推理，对比预测结果与真实标签",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_image_onnx"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "计算 Top-1 准确率：统计正确预测的样本比例，输出模型准确率报告",
+              "nodeIds": [
+                "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_image_onnx",
+                "class:quark/experimental/cli/quark_onnx/onnx_validate.py:ONNXValidate_CLI"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/experimental/cli/quark_onnx/onnx_validate.py",
+            "file:quark/experimental/cli/quark_onnx/helper_utils.py",
+            "function:quark/experimental/cli/quark_onnx/onnx_validate.py:evaluate_image_onnx"
+          ]
+        },
+        {
+          "id": "flow:model-evaluation-onnx-finetune",
+          "name": "ONNX 微调评估",
+          "description": "在量化后进行快速微调并评估精度恢复效果，使用 PyTorch 训练管道对量化 ONNX 模型进行少量迭代微调以补偿量化误差。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "构建微调 Torch 模型：将量化 ONNX 模型转换为可训练的 PyTorch 模型",
+              "nodeIds": [
+                "file:quark/onnx/algorithm/finetuning/create_torch/create_model.py",
+                "file:quark/onnx/algorithm/finetuning/create_torch/quant_base_ops.py",
+                "file:quark/onnx/algorithm/finetuning/create_torch/quant_conv_ops.py",
+                "file:quark/onnx/algorithm/finetuning/create_torch/quant_linear_ops.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行快速微调：使用数据工具、损失函数和混合精度训练器进行少量迭代微调",
+              "nodeIds": [
+                "file:quark/onnx/finetuning/train_torch/train.py",
+                "file:quark/onnx/finetuning/train_torch/quant_trainer.py",
+                "file:quark/onnx/finetuning/train_torch/loss.py",
+                "file:quark/onnx/finetuning/train_torch/data_utils.py",
+                "file:quark/onnx/finetuning/train_torch/mixed_precision.py",
+                "file:quark/onnx/finetuning/train_torch/accelerate.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "ONNX 评估验证：在微调后的模型上运行评估，验证精度恢复效果",
+              "nodeIds": [
+                "file:quark/onnx/algorithm/finetuning/onnx_evaluate.py",
+                "file:quark/onnx/algorithm/finetuning/onnx_subgraph.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/onnx/algorithm/finetuning/fast_finetune.py",
+            "file:quark/onnx/algorithm/finetuning/create_torch/create_model.py",
+            "file:quark/onnx/algorithm/finetuning/onnx_evaluate.py",
+            "file:quark/onnx/finetuning/train_torch/train.py",
+            "file:quark/onnx/finetuning/train_torch/quant_trainer.py"
+          ]
+        }
       ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entities": [
-          "evaluate_model",
-          "ppl_calculate"
-        ],
-        "businessRules": [
-          "perplexity 需与 float 基准对比"
-        ],
-        "crossDomainInteractions": [
-          "为自动搜索提供精度反馈",
-          "验证量化和优化产出"
-        ]
-      }
+      "nodeIds": [
+        "file:quark/experimental/cli/quark_onnx/onnx_validate.py",
+        "file:quark/experimental/cli/quark_onnx/helper_utils.py",
+        "file:quark/onnx/algorithm/finetuning/fast_finetune.py",
+        "file:quark/onnx/algorithm/finetuning/create_torch/create_model.py",
+        "file:quark/onnx/algorithm/finetuning/onnx_evaluate.py",
+        "file:quark/onnx/finetuning/train_torch/train.py",
+        "file:quark/onnx/finetuning/train_torch/quant_trainer.py",
+        "file:quark/onnx/finetuning/train_torch/loss.py",
+        "file:quark/onnx/finetuning/train_torch/data_utils.py"
+      ]
     },
     {
-      "id": "domain:model-compression",
-      "type": "domain",
+      "id": "domain:model-pruning",
       "name": "模型剪枝",
-      "summary": "通过 OSSCAR 结构化剪枝和深度剪枝减少模型参数量，与量化组合实现级联压缩。支持 Blockwise 调优恢复精度。",
-      "tags": [
-        "剪枝",
-        "压缩",
-        "OSSCAR"
+      "description": "模型剪枝是模型压缩的另一重要路径，通过移除神经网络中不重要的权重或整个层（深度剪枝）来减少模型参数量和计算量。与量化互补，剪枝可以直接减少模型体积。当前主要支持基于 OSSCAR 算法的高级剪枝和逐块调优（Blockwise Tuning），通过重要性评估标准选择需要剪枝的参数。",
+      "flows": [
+        {
+          "id": "flow:model-pruning-depth",
+          "name": "深度剪枝与结构剪枝",
+          "description": "使用高级剪枝算法（OSSCAR）对模型进行结构化剪枝，移除冗余的层或通道以减少模型深度和宽度，支持逐块调优以保持模型精度。",
+          "steps": [
+            {
+              "order": 1,
+              "description": "配置剪枝策略：定义剪枝算法类型（如 OSSCAR）、剪枝率、重要性评估标准等参数",
+              "nodeIds": [
+                "file:quark/torch/pruning/config.py",
+                "file:quark/torch/pruning/criteria.py"
+              ]
+            },
+            {
+              "order": 2,
+              "description": "执行剪枝算法：使用 OSSCAR 算法评估各层/通道的重要性并执行剪枝",
+              "nodeIds": [
+                "file:quark/torch/pruning/pruner.py",
+                "file:quark/torch/algorithm/osscar/osscar.py"
+              ]
+            },
+            {
+              "order": 3,
+              "description": "逐块调优：对剪枝后的模型进行逐块精度恢复调优（Blockwise Tuning）",
+              "nodeIds": [
+                "file:quark/torch/algorithm/blockwise_tuning/blockwise_tuning.py"
+              ]
+            },
+            {
+              "order": 4,
+              "description": "输出剪枝模型：通过剪枝 API 导出优化后的模型",
+              "nodeIds": [
+                "file:quark/torch/pruning/api.py"
+              ]
+            }
+          ],
+          "nodeIds": [
+            "file:quark/torch/pruning/api.py",
+            "file:quark/torch/pruning/config.py",
+            "file:quark/torch/pruning/criteria.py",
+            "file:quark/torch/pruning/pruner.py",
+            "file:quark/torch/algorithm/osscar/osscar.py",
+            "file:quark/torch/algorithm/blockwise_tuning/blockwise_tuning.py",
+            "file:quark/torch/algorithm/depth_pruning/depth_pruning.py"
+          ]
+        }
       ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entities": [
-          "ModelPruner",
-          "OSSCARConfig"
-        ],
-        "businessRules": [
-          "剪枝后可接量化形成级联压缩"
-        ],
-        "crossDomainInteractions": [
-          "输出剪枝模型到量化域",
-          "通过评估域验证效果"
-        ]
-      }
-    },
-    {
-      "id": "domain:cli-automation",
-      "type": "domain",
-      "name": "CLI 自动化",
-      "summary": "quark-cli 统一命令行接口，8 个子命令覆盖数据准备到精度验证的完整工作流，为非 Python 用户提供自动化接口。",
-      "tags": [
-        "CLI",
-        "自动化",
-        "工作流"
-      ],
-      "complexity": "simple",
-      "domainMeta": {
-        "entities": [
-          "quark-cli",
-          "OnnxPTQ_CLI"
-        ],
-        "businessRules": [
-          "每个子命令有独立参数空间"
-        ],
-        "crossDomainInteractions": [
-          "编排量化和部署域的完整流水线"
-        ]
-      }
-    },
-    {
-      "id": "flow:torch-quantization",
-      "type": "flow",
-      "name": "PyTorch 量化流水线",
-      "summary": "PyTorch 后端完整量化流程：加载模型 → 替换量化算子 → 应用预量化算法 → 校准 → 插入伪量化 → 后处理 → 冻结序列化。",
-      "tags": [
-        "PyTorch",
-        "量化流水线"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "ModelQuantizer.quantize_model()",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:onnx-quantization",
-      "type": "flow",
-      "name": "ONNX 量化流水线",
-      "summary": "ONNX 后端量化流程：加载模型 → 形状推断 → 预处理变换 → 校准 → 插入 QDQ → 后处理 → 图优化。支持静态和动态量化。",
-      "tags": [
-        "ONNX",
-        "量化流水线",
-        "QDQ"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "ModelQuantizer.quantize_model()",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:config-management",
-      "type": "flow",
-      "name": "量化配置管理",
-      "summary": "三层配置优先级：全局默认 → 按层类型覆盖 → 按层名精确覆盖。LLM 场景通过 LLMTemplate 预注册模板一键生成配置。",
-      "tags": [
-        "配置",
-        "优先级",
-        "LLM模板"
-      ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entryPoint": "QConfig / LLMTemplate.get_config()",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:weight-optimization",
-      "type": "flow",
-      "name": "权重量化优化",
-      "summary": "通过 AWQ（激活感知缩放因子搜索）和 GPTQ（Hessian 矩阵逐列量化）优化权重量化效果。",
-      "tags": [
-        "权重优化",
-        "AWQ",
-        "GPTQ"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "PROCESSOR_MAP 中 AWQ/GPTQ 处理器",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:activation-optimization",
-      "type": "flow",
-      "name": "激活分布优化",
-      "summary": "SmoothQuant 平滑激活、CLE 跨层均衡、QuaRot/Rotation（四层 Hadamard 旋转）优化激活分布以提升量化效果。",
-      "tags": [
-        "SmoothQuant",
-        "QuaRot",
-        "Rotation"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "SmoothQuantConfig / RotationProcessor",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:auto-precision-search",
-      "type": "flow",
-      "name": "自动精度搜索",
-      "summary": "定义搜索空间 → 生成候选配置 → 批量评估 → 选择 Pareto 最优混合精度配置。",
-      "tags": [
-        "自动搜索",
-        "混合精度"
-      ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entryPoint": "AutoSearch / AutoSearchPro",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:format-export",
-      "type": "flow",
-      "name": "格式导出",
-      "summary": "ONNX 导出（含 uint4/int4 转换）、GGUF 导出（LLM 推理）、JSON-Safetensors 导出（Quark 原生格式）。",
-      "tags": [
-        "导出",
-        "ONNX",
-        "GGUF",
-        "Safetensors"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "export_onnx / export_gguf / export_safetensors",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:graph-adaptation",
-      "type": "flow",
-      "name": "ONNX 图适配",
-      "summary": "执行 24 种图变换 Pass（BN折叠/算子融合/布局转换等）和 ONNX Runtime/Slim 优化，确保与目标硬件兼容。",
-      "tags": [
-        "图优化",
-        "Pass",
-        "硬件适配"
-      ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entryPoint": "onnx_adapter()",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:accuracy-validation",
-      "type": "flow",
-      "name": "精度验证",
-      "summary": "运行浮点基准和量化模型推理 → 计算精度退化指标 → 输出对比报告。",
-      "tags": [
-        "验证",
-        "精度",
-        "对比"
-      ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entryPoint": "onnx-validate CLI 子命令",
-        "entryType": "cli"
-      }
-    },
-    {
-      "id": "flow:llm-benchmark",
-      "type": "flow",
-      "name": "LLM 基准评测",
-      "summary": "Perplexity 计算（含 KV-Cache 模式）→ lm-eval-harness 标准任务 → ROUGE/METEOR 生成质量评估。",
-      "tags": [
-        "perplexity",
-        "lm-eval",
-        "基准测试"
-      ],
-      "complexity": "complex",
-      "domainMeta": {
-        "entryPoint": "llm_eval.evaluation 模块",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:weight-pruning",
-      "type": "flow",
-      "name": "权重剪枝",
-      "summary": "计算权重重要性 → 生成并应用稀疏掩码 → Blockwise 微调恢复精度。",
-      "tags": [
-        "剪枝",
-        "OSSCAR",
-        "稀疏化"
-      ],
-      "complexity": "moderate",
-      "domainMeta": {
-        "entryPoint": "ModelPruner",
-        "entryType": "manual"
-      }
-    },
-    {
-      "id": "flow:cli-workflow",
-      "type": "flow",
-      "name": "CLI 工作流编排",
-      "summary": "解析子命令 → 校验参数 → 加载配置 → 执行对应域流水线。为 CI/CD 提供无代码接口。",
-      "tags": [
-        "CLI",
-        "自动化"
-      ],
-      "complexity": "simple",
-      "domainMeta": {
-        "entryPoint": "quark-cli",
-        "entryType": "cli"
-      }
-    },
-    {
-      "id": "step:torch-quantization:load-model",
-      "type": "step",
-      "name": "加载模型和配置",
-      "summary": "从 HuggingFace 或本地加载预训练模型，解析 QConfig 量化配置并执行校验。",
-      "tags": [
-        "加载",
-        "配置解析"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/quantization/api.py"
-    },
-    {
-      "id": "step:torch-quantization:replace-operators",
-      "type": "step",
-      "name": "替换量化算子",
-      "summary": "将 nn.Linear/nn.Conv2d/nn.Embedding 替换为 QuantLinear/QuantConv2d/QuantEmbedding。",
-      "tags": [
-        "算子替换"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/quantization/model_transformation.py"
-    },
-    {
-      "id": "step:torch-quantization:apply-pre-quant-algorithms",
-      "type": "step",
-      "name": "应用预量化算法",
-      "summary": "按 PROCESSOR_MAP 顺序执行 AWQ/GPTQ/Rotation 等预量化优化。",
-      "tags": [
-        "预量化",
-        "算法"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/torch/algorithm/api.py"
-    },
-    {
-      "id": "step:torch-quantization:calibrate",
-      "type": "step",
-      "name": "校准数据收集",
-      "summary": "使用校准数据遍历模型，Observer 收集激活/权重统计量，计算 scale/zero_point。",
-      "tags": [
-        "校准",
-        "统计量"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/quantization/tensor_quantize.py"
-    },
-    {
-      "id": "step:torch-quantization:fake-quantize",
-      "type": "step",
-      "name": "插入伪量化",
-      "summary": "将统计量注册为 buffer，前向通过 CUDA 内核模拟低精度量化/反量化。",
-      "tags": [
-        "伪量化",
-        "CUDA"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/torch/quantization/tensor_quantize.py"
-    },
-    {
-      "id": "step:torch-quantization:post-process",
-      "type": "step",
-      "name": "后处理调优",
-      "summary": "执行 BiasCorrection/AdaRound 等后处理恢复精度损失。",
-      "tags": [
-        "后处理",
-        "BiasCorrection"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/algorithm/api.py"
-    },
-    {
-      "id": "step:torch-quantization:freeze-serialize",
-      "type": "step",
-      "name": "冻结与序列化",
-      "summary": "冻结量化参数为常量 buffer，生成可独立部署的量化模型。",
-      "tags": [
-        "冻结",
-        "序列化"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/torch/quantization/tensor_quantize.py"
-    },
-    {
-      "id": "step:onnx-quantization:load-onnx-model",
-      "type": "step",
-      "name": "加载 ONNX 模型",
-      "summary": "通过 onnx.load() 加载模型 proto，支持外部数据格式。",
-      "tags": [
-        "ONNX加载"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/quantize.py"
-    },
-    {
-      "id": "step:onnx-quantization:shape-inference",
-      "type": "step",
-      "name": "形状推断",
-      "summary": "执行 ONNX 形状推断确定中间张量维度信息。",
-      "tags": [
-        "形状推断"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/quantize.py"
-    },
-    {
-      "id": "step:onnx-quantization:pre-process",
-      "type": "step",
-      "name": "预处理变换",
-      "summary": "量化前执行 SmoothQuant/CLE/QuaRot 等预处理算法优化图结构。",
-      "tags": [
-        "预处理",
-        "SmoothQuant",
-        "CLE"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/onnx/algorithm/"
-    },
-    {
-      "id": "step:onnx-quantization:collect-statistics",
-      "type": "step",
-      "name": "收集张量统计量",
-      "summary": "使用多种校准方法（MinMax/Percentile/MSE/Entropy/PowerOfTwo）收集统计量。",
-      "tags": [
-        "校准",
-        "统计量"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/onnx/calibration/"
-    },
-    {
-      "id": "step:onnx-quantization:insert-qdq-nodes",
-      "type": "step",
-      "name": "插入 QDQ 节点",
-      "summary": "创建量化器在图中插入 QuantizeLinear/DequantizeLinear 节点对。",
-      "tags": [
-        "QDQ",
-        "量化器"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/onnx/quantizers/"
-    },
-    {
-      "id": "step:onnx-quantization:post-process",
-      "type": "step",
-      "name": "后处理与图优化",
-      "summary": "执行 AdaRound/AdaQuant/混合精度选择，运行 ONNX Runtime/Slim 图优化。",
-      "tags": [
-        "后处理",
-        "图优化"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/onnx/optimizations/"
-    },
-    {
-      "id": "step:config-management:define-global-config",
-      "type": "step",
-      "name": "定义全局量化配置",
-      "summary": "创建 QConfig 设置全局默认量化规格（数据类型/方案/观测器）。",
-      "tags": [
-        "全局配置"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/torch/quantization/config/config.py"
-    },
-    {
-      "id": "step:config-management:override-layer-configs",
-      "type": "step",
-      "name": "覆写层配置",
-      "summary": "按层类型和层名覆写全局配置，LLM 场景可用 LLMTemplate 预注册模板。",
-      "tags": [
-        "逐层配置",
-        "LLM模板"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/quantization/config/template.py"
-    },
-    {
-      "id": "step:config-management:resolve-priority",
-      "type": "step",
-      "name": "解析优先级",
-      "summary": "按逐层 > 按类型 > 全局合并配置，执行 QTensorConfig 一致性校验。",
-      "tags": [
-        "优先级",
-        "校验"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/torch/quantization/model_transformation.py"
-    },
-    {
-      "id": "step:weight-optimization:awq-scale-search",
-      "type": "step",
-      "name": "AWQ 缩放搜索",
-      "summary": "分析激活分布，网格搜索最优逐通道缩放因子和裁剪阈值。",
-      "tags": [
-        "AWQ",
-        "网格搜索"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/torch/algorithm/awq/"
-    },
-    {
-      "id": "step:weight-optimization:gptq-hessian-quant",
-      "type": "step",
-      "name": "GPTQ Hessian 量化",
-      "summary": "使用 Hessian 信息（Cholesky 分解）按重要性顺序逐列量化权重。",
-      "tags": [
-        "GPTQ",
-        "Hessian",
-        "Cholesky"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/torch/algorithm/gptq/"
-    },
-    {
-      "id": "step:activation-optimization:smooth-quant-transform",
-      "type": "step",
-      "name": "平滑量化变换",
-      "summary": "引入 smooth 因子将量化难度从激活转移到权重。",
-      "tags": [
-        "SmoothQuant"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/algorithm/awq/"
-    },
-    {
-      "id": "step:activation-optimization:quarot-rotation",
-      "type": "step",
-      "name": "正交旋转优化",
-      "summary": "R1-R4 四层 Hadamard 旋转变换消除异常值，支持在线/离线模式和 RMSNorm 融合。",
-      "tags": [
-        "Rotation",
-        "Hadamard"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/torch/algorithm/rotation/"
-    },
-    {
-      "id": "step:auto-precision-search:define-search-space",
-      "type": "step",
-      "name": "定义搜索空间",
-      "summary": "根据硬件能力约束定义各层允许的数据类型组合搜索空间。",
-      "tags": [
-        "搜索空间"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/auto_search/"
-    },
-    {
-      "id": "step:auto-precision-search:evaluate-configurations",
-      "type": "step",
-      "name": "评估候选配置",
-      "summary": "对候选配置执行批量量化并用验证集评估精度。",
-      "tags": [
-        "批量评估"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/onnx/quantization/auto_search/"
-    },
-    {
-      "id": "step:auto-precision-search:select-optimal",
-      "type": "step",
-      "name": "选择最优配置",
-      "summary": "基于精度-性能 Pareto 前沿选择最优混合精度配置。",
-      "tags": [
-        "Pareto选择"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/auto_search/"
-    },
-    {
-      "id": "step:format-export:export-onnx",
-      "type": "step",
-      "name": "导出 ONNX",
-      "summary": "导出 PyTorch 量化模型为标准 ONNX，处理 uint4/int4 权重转换。",
-      "tags": [
-        "ONNX导出"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/export/onnx.py"
-    },
-    {
-      "id": "step:format-export:export-gguf",
-      "type": "step",
-      "name": "导出 GGUF",
-      "summary": "导出量化 LLM 为 GGUF 格式（Q4_1 等），处理权重打包和元数据写入。",
-      "tags": [
-        "GGUF导出"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/export/gguf_export/"
-    },
-    {
-      "id": "step:format-export:export-safetensors",
-      "type": "step",
-      "name": "导出 Safetensors",
-      "summary": "以 JSON+Safetensors 导出，分离量化配置和权重，支持 quark_ptq/awq/fp8 模式。",
-      "tags": [
-        "Safetensors导出"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/export/safetensors.py"
-    },
-    {
-      "id": "step:graph-adaptation:run-passes",
-      "type": "step",
-      "name": "执行图变换",
-      "summary": "执行 24 种 ONNX 图变换 Pass（BN折叠/算子融合/布局转换等）。",
-      "tags": [
-        "图Pass"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/onnx_adapter/passes/"
-    },
-    {
-      "id": "step:graph-adaptation:optimize-graph",
-      "type": "step",
-      "name": "图优化",
-      "summary": "运行 ONNX Runtime 优化器和 ONNX Slim 简化图结构。",
-      "tags": [
-        "图优化"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/optimizations/"
-    },
-    {
-      "id": "step:accuracy-validation:run-inference",
-      "type": "step",
-      "name": "运行推理",
-      "summary": "使用浮点基准和量化模型在验证集上运行推理收集预测输出。",
-      "tags": [
-        "推理"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/output_eval.py"
-    },
-    {
-      "id": "step:accuracy-validation:compute-metrics",
-      "type": "step",
-      "name": "计算精度指标",
-      "summary": "计算分类准确率/余弦相似度/MSE 等精度退化指标。",
-      "tags": [
-        "指标计算"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/onnx/quantization/output_eval.py"
-    },
-    {
-      "id": "step:accuracy-validation:compare-baseline",
-      "type": "step",
-      "name": "对比基准",
-      "summary": "对比量化和浮点指标生成精度退化报告。",
-      "tags": [
-        "对比",
-        "报告"
-      ],
-      "complexity": "simple"
-    },
-    {
-      "id": "step:llm-benchmark:calculate-perplexity",
-      "type": "step",
-      "name": "计算 Perplexity",
-      "summary": "计算标准化 PPL 和 KV-Cache PPL（更贴近实际推理），与浮点基准对比。",
-      "tags": [
-        "perplexity",
-        "KV-Cache"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/contrib/llm_eval/evaluation.py"
-    },
-    {
-      "id": "step:llm-benchmark:run-harness-tasks",
-      "type": "step",
-      "name": "运行 Harness 任务",
-      "summary": "使用 lm-eval-harness 评估 MMLU/HellaSwag/ARC 等标准任务准确率。",
-      "tags": [
-        "lm-eval",
-        "MMLU"
-      ],
-      "complexity": "complex",
-      "filePath": "quark/contrib/llm_eval/evaluation.py"
-    },
-    {
-      "id": "step:weight-pruning:compute-importance",
-      "type": "step",
-      "name": "计算重要性分数",
-      "summary": "通过结构分析或梯度信息计算权重/结构重要性分数。",
-      "tags": [
-        "重要性"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/pruning/api.py"
-    },
-    {
-      "id": "step:weight-pruning:apply-mask",
-      "type": "step",
-      "name": "应用稀疏掩码",
-      "summary": "生成并应用稀疏掩码（支持 OSSCAR 结构化和非结构化剪枝）。",
-      "tags": [
-        "掩码",
-        "OSSCAR"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/pruning/api.py"
-    },
-    {
-      "id": "step:weight-pruning:finetune-recovery",
-      "type": "step",
-      "name": "微调恢复",
-      "summary": "Blockwise 逐块调优恢复剪枝精度损失。",
-      "tags": [
-        "微调",
-        "Blockwise"
-      ],
-      "complexity": "moderate",
-      "filePath": "quark/torch/algorithm/blockwise_tuning/"
-    },
-    {
-      "id": "step:cli-workflow:parse-subcommand",
-      "type": "step",
-      "name": "解析子命令",
-      "summary": "argparse 解析 8 个子命令。",
-      "tags": [
-        "CLI解析"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/experimental/cli/main.py"
-    },
-    {
-      "id": "step:cli-workflow:validate-args",
-      "type": "step",
-      "name": "校验参数",
-      "summary": "验证参数类型和路径，加载 JSON 配置。",
-      "tags": [
-        "参数校验"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/experimental/cli/main.py"
-    },
-    {
-      "id": "step:cli-workflow:execute-pipeline",
-      "type": "step",
-      "name": "执行流水线",
-      "summary": "创建 CLI 处理类实例驱动对应域的内部 API 完成操作。",
-      "tags": [
-        "执行"
-      ],
-      "complexity": "simple",
-      "filePath": "quark/experimental/cli/"
+      "nodeIds": [
+        "file:quark/torch/pruning/api.py",
+        "file:quark/torch/pruning/config.py",
+        "file:quark/torch/pruning/criteria.py",
+        "file:quark/torch/pruning/pruner.py",
+        "file:quark/torch/algorithm/osscar/osscar.py",
+        "file:quark/torch/algorithm/blockwise_tuning/blockwise_tuning.py",
+        "file:quark/torch/algorithm/depth_pruning/depth_pruning.py"
+      ]
     }
-  ],
-  "edges": [
-    {
-      "source": "domain:model-quantization",
-      "target": "flow:torch-quantization",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-quantization",
-      "target": "flow:onnx-quantization",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-quantization",
-      "target": "flow:config-management",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-optimization",
-      "target": "flow:weight-optimization",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-optimization",
-      "target": "flow:activation-optimization",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-optimization",
-      "target": "flow:auto-precision-search",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-deployment",
-      "target": "flow:format-export",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-deployment",
-      "target": "flow:graph-adaptation",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-evaluation",
-      "target": "flow:accuracy-validation",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-evaluation",
-      "target": "flow:llm-benchmark",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:model-compression",
-      "target": "flow:weight-pruning",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "domain:cli-automation",
-      "target": "flow:cli-workflow",
-      "type": "contains_flow",
-      "direction": "forward",
-      "weight": 1.0
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:load-model",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.1
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:replace-operators",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:apply-pre-quant-algorithms",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:calibrate",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.4
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:fake-quantize",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:post-process",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.6
-    },
-    {
-      "source": "flow:torch-quantization",
-      "target": "step:torch-quantization:freeze-serialize",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.7
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:load-onnx-model",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.1
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:shape-inference",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:pre-process",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:collect-statistics",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.4
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:insert-qdq-nodes",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:onnx-quantization",
-      "target": "step:onnx-quantization:post-process",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.6
-    },
-    {
-      "source": "flow:config-management",
-      "target": "step:config-management:define-global-config",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:config-management",
-      "target": "step:config-management:override-layer-configs",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.4
-    },
-    {
-      "source": "flow:config-management",
-      "target": "step:config-management:resolve-priority",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.6
-    },
-    {
-      "source": "flow:weight-optimization",
-      "target": "step:weight-optimization:awq-scale-search",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:weight-optimization",
-      "target": "step:weight-optimization:gptq-hessian-quant",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.6
-    },
-    {
-      "source": "flow:activation-optimization",
-      "target": "step:activation-optimization:smooth-quant-transform",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:activation-optimization",
-      "target": "step:activation-optimization:quarot-rotation",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.6
-    },
-    {
-      "source": "flow:auto-precision-search",
-      "target": "step:auto-precision-search:define-search-space",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:auto-precision-search",
-      "target": "step:auto-precision-search:evaluate-configurations",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:auto-precision-search",
-      "target": "step:auto-precision-search:select-optimal",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.8
-    },
-    {
-      "source": "flow:format-export",
-      "target": "step:format-export:export-onnx",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:format-export",
-      "target": "step:format-export:export-gguf",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:format-export",
-      "target": "step:format-export:export-safetensors",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.8
-    },
-    {
-      "source": "flow:graph-adaptation",
-      "target": "step:graph-adaptation:run-passes",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:graph-adaptation",
-      "target": "step:graph-adaptation:optimize-graph",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.7
-    },
-    {
-      "source": "flow:accuracy-validation",
-      "target": "step:accuracy-validation:run-inference",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:accuracy-validation",
-      "target": "step:accuracy-validation:compute-metrics",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:accuracy-validation",
-      "target": "step:accuracy-validation:compare-baseline",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.8
-    },
-    {
-      "source": "flow:llm-benchmark",
-      "target": "step:llm-benchmark:calculate-perplexity",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.3
-    },
-    {
-      "source": "flow:llm-benchmark",
-      "target": "step:llm-benchmark:run-harness-tasks",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.7
-    },
-    {
-      "source": "flow:weight-pruning",
-      "target": "step:weight-pruning:compute-importance",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:weight-pruning",
-      "target": "step:weight-pruning:apply-mask",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:weight-pruning",
-      "target": "step:weight-pruning:finetune-recovery",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.8
-    },
-    {
-      "source": "flow:cli-workflow",
-      "target": "step:cli-workflow:parse-subcommand",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.2
-    },
-    {
-      "source": "flow:cli-workflow",
-      "target": "step:cli-workflow:validate-args",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.5
-    },
-    {
-      "source": "flow:cli-workflow",
-      "target": "step:cli-workflow:execute-pipeline",
-      "type": "flow_step",
-      "direction": "forward",
-      "weight": 0.8
-    },
-    {
-      "source": "domain:model-optimization",
-      "target": "domain:model-quantization",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "优化算法作为量化流水线的前后处理阶段",
-      "weight": 0.8
-    },
-    {
-      "source": "domain:model-quantization",
-      "target": "domain:model-deployment",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "量化完成的冻结模型传递给导出流程",
-      "weight": 0.8
-    },
-    {
-      "source": "domain:model-evaluation",
-      "target": "domain:model-optimization",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "评估结果为自动搜索和算法调优提供反馈",
-      "weight": 0.6
-    },
-    {
-      "source": "domain:model-compression",
-      "target": "domain:model-quantization",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "剪枝后模型可继续量化实现级联压缩",
-      "weight": 0.5
-    },
-    {
-      "source": "domain:cli-automation",
-      "target": "domain:model-quantization",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "CLI 编排量化执行",
-      "weight": 0.7
-    },
-    {
-      "source": "domain:cli-automation",
-      "target": "domain:model-deployment",
-      "type": "cross_domain",
-      "direction": "forward",
-      "description": "CLI 编排导出执行",
-      "weight": 0.7
-    }
-  ],
-  "layers": [],
-  "tour": []
+  ]
 }
