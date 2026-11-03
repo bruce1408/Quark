@@ -164,3 +164,4 @@ dataset_cache/
 
 # Debian packages
 *.deb
+/.gitnexus/
